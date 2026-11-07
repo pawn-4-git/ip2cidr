@@ -1,0 +1,50 @@
+plugins {
+    id 'java-library'
+    id 'application'
+}
+
+group = 'com.ip2cidr'
+version = '1.0.0'
+
+// Java 25 をターゲットとして想定。
+// ビルド環境の JDK が 25 未満の場合は、利用可能な JDK の最新リリースバージョンでコンパイルします。
+def targetJavaVersion = Integer.parseInt(findProperty('javaVersion')?.toString() ?: '25')
+def currentJvmVersion = Integer.parseInt(JavaVersion.current().majorVersion)
+def effectiveRelease = Math.min(targetJavaVersion, currentJvmVersion)
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = effectiveRelease
+}
+
+application {
+    mainClass = 'com.ip2cidr.cli.Main'
+}
+
+jar {
+    manifest {
+        attributes(
+            'Main-Class': 'com.ip2cidr.cli.Main',
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version
+        )
+    }
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+    }
+}
+
