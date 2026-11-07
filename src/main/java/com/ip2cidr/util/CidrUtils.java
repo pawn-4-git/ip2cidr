@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -39,6 +40,19 @@ public final class CidrUtils {
         } catch (IllegalArgumentException e) {
             return false;
         }
+    }
+
+    /**
+     * 2つの {@link InetAddress} を数値順（IPv4 → IPv6、各オクテットの符号なし数値昇順）で比較します。
+     */
+    public static int compareIpAddresses(InetAddress a, InetAddress b) {
+        byte[] bytesA = a.getAddress();
+        byte[] bytesB = b.getAddress();
+        int lenCmp = Integer.compare(bytesA.length, bytesB.length);
+        if (lenCmp != 0) {
+            return lenCmp;
+        }
+        return Arrays.compareUnsigned(bytesA, bytesB);
     }
 
     /**
