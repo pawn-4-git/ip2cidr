@@ -5,9 +5,14 @@ import com.ip2cidr.model.WhoisCidrInfo;
 import com.ip2cidr.util.CsvFormatter.OutputMode;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CsvFormatterTest {
@@ -42,6 +47,88 @@ class CsvFormatterTest {
         assertTrue(ipLines[0].startsWith("IPAddress,CIDR,NetworkIP,PrefixLength,"));
         assertTrue(ipLines[1].startsWith("8.8.8.8,8.8.8.0/24,8.8.8.0,24,"));
         assertTrue(ipLines[2].startsWith("8.8.8.4,8.8.8.0/24,8.8.8.0,24,"));
+    }
+
+    @Test
+    void testShowRawNullResultsAndOutputModeFromString() {
+        assertEquals(OutputMode.CIDR, OutputMode.fromString(null));
+        assertEquals(OutputMode.CIDR, OutputMode.fromString("   "));
+        assertEquals(OutputMode.CIDR, OutputMode.fromString("cidr"));
+        assertEquals(OutputMode.CIDR, OutputMode.fromString(" CIDR "));
+        assertEquals(OutputMode.IP, OutputMode.fromString("ip"));
+        assertEquals(OutputMode.IP, OutputMode.fromString(" IP "));
+        assertThrows(IllegalArgumentException.class, () -> OutputMode.fromString("invalid"));
+
+        WhoisCidrInfo info = new WhoisCidrInfo(
+                new Cidr("192.0.2.0", 24),
+                List.of(new Cidr("192.0.2.0", 25), new Cidr("192.0.2.128", 25)),
+                "192.0.2.0 - 192.0.2.255",
+                List.of("192.0.2.1"),
+                "JP",
+                "Example Org",
+                "EX-NET",
+                List.of("Desc 1", "Desc 2"),
+                List.of("ADM1"),
+                List.of("TECH1"),
+                List.of("abuse@example.jp"),
+                "line1\nline2");
+
+        String cidrRawCsv = CsvFormatter.format(List.of(info), OutputMode.CIDR, true);
+        assertTrue(cidrRawCsv.contains(",RawWhoisOutput"));
+        assertTrue(cidrRawCsv.contains("\"line1\nline2\""));
+
+        String ipRawCsv = CsvFormatter.format(List.of(info), OutputMode.IP, true);
+        assertTrue(ipRawCsv.contains(",RawWhoisOutput"));
+        assertTrue(ipRawCsv.contains("\"line1\nline2\""));
+
+        // null リストの場合はヘッダーのみ出力されること
+        String nullCidrCsv = CsvFormatter.format(null, OutputMode.CIDR, false);
+        assertEquals(1, nullCidrCsv.trim().split("\\R").length);
+
+        String nullIpCsv = CsvFormatter.format(null, OutputMode.IP, false);
+        assertEquals(1, nullIpCsv.trim().split("\\R").length);
+    }
+
+    @Test
+    void testEscapeCsvAndFormulaInjectionProtection() {
+        assertEquals("", CsvFormatter.escapeCsv(null));
+        assertEquals("", CsvFormatter.escapeCsv(""));
+        assertEquals("plain", CsvFormatter.escapeCsv("plain"));
+        assertEquals("\"'=SUM(A1:A2)\"", CsvFormatter.escapeCsv("=SUM(A1:A2)"));
+        assertEquals("\"'+12345\"", CsvFormatter.escapeCsv("+12345"));
+        assertEquals("\"'-12345\"", CsvFormatter.escapeCsv("-12345"));
+        assertEquals("\"'@cmd\"", CsvFormatter.escapeCsv("@cmd"));
+        assertEquals("\"a,\"\"b\"\",c\"", CsvFormatter.escapeCsv("a,\"b\",c"));
+        assertEquals("\"quote\"\"only\"", CsvFormatter.escapeCsv("quote\"only"));
+        assertEquals("\"line1\rline2\"", CsvFormatter.escapeCsv("line1\rline2"));
+    }
+
+    @Test
+    void testWriteToFile() throws IOException {
+        WhoisCidrInfo info = new WhoisCidrInfo(
+                new Cidr("192.0.2.0", 24),
+                List.of(new Cidr("192.0.2.0", 24)),
+                "192.0.2.0 - 192.0.2.255",
+                List.of("192.0.2.1"),
+                "JP",
+                "Example Org",
+                "EX-NET",
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                "raw");
+
+        Path outPath = Path.of("build", "tmp", "test-csv-output", "sub_" + System.nanoTime(), "result.csv");
+        CsvFormatter.writeToFile(outPath, List.of(info), OutputMode.CIDR, false);
+        assertTrue(Files.exists(outPath));
+        String content = Files.readString(outPath, StandardCharsets.UTF_8);
+        assertTrue(content.contains("192.0.2.0/24,192.0.2.0,24"));
+
+        // 既に親ディレクトリが存在する状態での上書き出力
+        CsvFormatter.writeToFile(outPath, List.of(info), OutputMode.IP, true);
+        String updatedContent = Files.readString(outPath, StandardCharsets.UTF_8);
+        assertTrue(updatedContent.contains("IPAddress,CIDR,"));
     }
 }
 
