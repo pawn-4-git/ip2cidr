@@ -1,0 +1,51 @@
+name: Build & Release JAR
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - '[0-9]*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build JAR & Publish GitHub Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '23'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+
+      - name: Extract version from tag
+        id: vars
+        run: |
+          TAG_NAME="${GITHUB_REF_NAME}"
+          VERSION="${TAG_NAME#v}"
+          echo "tag=${TAG_NAME}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Building version: ${VERSION} (from tag: ${TAG_NAME})"
+
+      - name: Build JAR with tag version
+        run: gradle build -PreleaseVersion="${{ steps.vars.outputs.version }}"
+
+      - name: Publish GitHub Release with JAR
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.vars.outputs.tag }}
+          name: Release ${{ steps.vars.outputs.tag }}
+          generate_release_notes: true
+          files: build/libs/ip2cidr-${{ steps.vars.outputs.version }}.jar
+

@@ -341,8 +341,12 @@ public class IpToCidrResolver {
             logStatus("[WHOIS] [%d/%d] Querying whois for %s...", current, total, ip);
             try {
                 String rawWhois = whoisExecutor.executeWhois(ip);
-                if (!whoisParser.isRateLimited(rawWhois) || attempt > maxRateLimitRetries) {
+                if (!whoisParser.isRateLimited(rawWhois)) {
                     return rawWhois;
+                }
+                if (attempt > maxRateLimitRetries) {
+                    throw new WhoisException(
+                            "Rate limit persisted after " + maxRateLimitRetries + " retries for IP: " + ip);
                 }
                 logStatus(
                         "[WHOIS] [WARN] Rate limit detected for IP %s. Waiting %d seconds before retry (%d/%d)...",

@@ -17,10 +17,21 @@ Java 25（または利用可能な最新のJDK）と Gradle を使用してビ�
 gradle build
 ```
 
-ビルド完了後、以下のパスにJARファイルが生成されます。
+ビルド完了後、以下のパスにJARファイルが生成されます（`-PreleaseVersion=x.y.z` で任意のバージョン名を指定可能です）。
 
 ```text
 build/libs/ip2cidr-1.0.0.jar
+```
+
+### 自動リリース（GitHub Releases）
+
+GitHub 上でタグ（例: `v1.0.0` または `1.0.0`）を作成またはプッシュすると、GitHub Actions（`.github/workflows/release.yml`）が自動実行されます。
+タグ名からバージョン番号（先頭の `v` を除いた文字列）を抽出し、`ip2cidr-<バージョン>.jar` をビルドした上で GitHub Releases ページへ自動的に公開・添付します。
+
+```bash
+# コマンドラインからタグを作成してリリースする場合の例
+git tag v1.1.0
+git push origin v1.1.0
 ```
 
 ### テストとカバレッジ計測

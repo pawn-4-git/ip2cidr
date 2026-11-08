@@ -159,18 +159,27 @@ public final class CsvFormatter {
         sb.append(System.lineSeparator());
     }
 
+    // Excel/Google Sheets等でCSVを開いた際に数式として実行されるのを防ぐための先頭文字
+    private static final String FORMULA_TRIGGER_CHARS = "=+-@";
+
     static String escapeCsv(String value) {
         if (value == null || value.isEmpty()) {
             return "";
         }
-        boolean needsQuotes = value.indexOf(',') >= 0
-                || value.indexOf('"') >= 0
-                || value.indexOf('\n') >= 0
-                || value.indexOf('\r') >= 0;
+
+        // whois応答（第三者が管理するレジストリ情報）由来の値が "=", "+", "-", "@" で始まる場合、
+        // 表計算ソフトで開いた際に数式として評価されるCSVインジェクションを防ぐため先頭にシングルクォートを付与する
+        String sanitized = FORMULA_TRIGGER_CHARS.indexOf(value.charAt(0)) >= 0 ? "'" + value : value;
+
+        boolean needsQuotes = sanitized.indexOf(',') >= 0
+                || sanitized.indexOf('"') >= 0
+                || sanitized.indexOf('\n') >= 0
+                || sanitized.indexOf('\r') >= 0
+                || sanitized.length() != value.length();
         if (!needsQuotes) {
-            return value;
+            return sanitized;
         }
-        return "\"" + value.replace("\"", "\"\"") + "\"";
+        return "\"" + sanitized.replace("\"", "\"\"") + "\"";
     }
 }
 

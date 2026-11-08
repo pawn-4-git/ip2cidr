@@ -5,7 +5,9 @@ plugins {
 }
 
 group = 'com.ip2cidr'
-version = '1.0.0'
+// -PreleaseVersion=x.y.z または環境変数 RELEASE_VERSION が指定されていればそのバージョンを適用（先頭の 'v' は自動除去）
+def rawVersion = findProperty('releaseVersion')?.toString() ?: System.getenv('RELEASE_VERSION') ?: '1.0.0'
+version = rawVersion.replaceFirst('^v(?=\\d)', '')
 
 // Java 25 をターゲットとして想定。
 // ビルド環境の JDK が 25 未満の場合は、利用可能な JDK の最新リリースバージョンでコンパイルします。
