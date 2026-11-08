@@ -41,6 +41,9 @@ repositories {
 
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    if (org.gradle.util.GradleVersion.current() >= org.gradle.util.GradleVersion.version('9.0')) {
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
+    }
 }
 
 tasks.named('test') {
