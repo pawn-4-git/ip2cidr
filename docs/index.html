@@ -117,7 +117,7 @@
         <div class="hero-top">
           <div class="hero-copy">
             <div class="hero-eyebrow">Java Library &amp; CLI Tool (IPv4 / IPv6 WHOIS Resolver)</div>
-            <h1 data-i18n="hero.title">複数のIPアドレスをWHOIS検索し、CIDR単位で高速・安全に集約</h1>
+            <h1 data-i18n="hero.title">複数のIPアドレスをWHOIS検索し、CIDR単位で集約</h1>
             <p class="hero-lead" data-i18n-html="hero.lead">
               <code>ip2cidr</code> は、大量のIPv4 / IPv6アドレスを入力として受け取り、OSの <code>whois</code>
               コマンドからCIDRブロック・国コード・登録組織・管理者/技術/Abuse連絡先を自動抽出して整理するJavaライブラリおよびCLIツールです。
@@ -176,7 +176,8 @@
             <h3 data-i18n="features.card4.title">世界中のRIR・JPNICフォーマット対応</h3>
             <p data-i18n-html="features.card4.desc">ARIN / APNIC / RIPE / LACNIC / AFRINIC / JPNIC に対応。明示的な
               <code>CIDR:</code> 行がない場合でも <code>inetnum</code>
-              や <code>NetRange</code> のIP範囲からCIDRを自動算出します。IPアドレス帯域が中途半端になる場合は、その帯域を過不足なく複数のCIDRブロックに分解して保持・判定します。</p>
+              や <code>NetRange</code> のIP範囲からCIDRを自動算出します。IPアドレス帯域が中途半端になる場合は、その帯域を過不足なく複数のCIDRブロックに分解して保持・判定します。
+            </p>
           </li>
         </ul>
 
@@ -328,8 +329,7 @@ gradle test</code></pre>
                 <button type="button" class="copy-btn" data-copy-target="builder-generated-cmd"
                   aria-label="生成されたCLIコマンドをコピー" data-i18n-aria-label="copyAria.generatedCmd">コピー</button>
               </div>
-              <pre
-              tabindex="0"><code id="builder-generated-cmd">java -jar ip2cidr-1.0.0.jar 8.8.8.8 8.8.8.4 1.1.1.1</code>
+              <pre tabindex="0"><code id="builder-generated-cmd">java -jar ip2cidr-1.0.0.jar 8.8.8.8 8.8.8.4 1.1.1.1</code>
               </pre>
             </div>
 
