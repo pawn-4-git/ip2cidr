@@ -75,7 +75,7 @@
       'nav.cliUsage': 'CLI Usage',
       'nav.csvSpec': 'CSV Spec',
       'nav.libraryApi': 'Java API',
-      'hero.title': 'Resolve Multiple IP Addresses via WHOIS and Aggregate by CIDR Safely & Fast',
+      'hero.title': 'Resolve Multiple IP Addresses via WHOIS and Aggregate by CIDR',
       'hero.btnQuickstart': 'Quick Start',
       'hero.btnBuilder': 'Try Command Builder',
       'hero.btnRepo': 'GitHub Repository',
