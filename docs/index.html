@@ -78,7 +78,7 @@
 </head>
 
 <body>
-  <a href="#content" class="skip-link visually-hidden">メインコンテンツへスキップ</a>
+  <a href="#content" class="skip-link visually-hidden" data-i18n="skipLink">メインコンテンツへスキップ</a>
   <div id="live-announcer" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
 
   <header class="site-header">
@@ -89,19 +89,23 @@
         <span class="brand-badge">v1.0.0</span>
       </a>
       <div class="nav-controls">
-        <nav aria-label="メイン">
-          <ul class="nav-list">
-            <li><a href="#features">特徴</a></li>
-            <li><a href="#quickstart">クイックスタート</a></li>
-            <li><a href="#cli-builder">コマンド生成</a></li>
-            <li><a href="#cli-usage">CLIの使い方</a></li>
-            <li><a href="#csv-spec">CSV出力仕様</a></li>
-            <li><a href="#library-api">Java API</a></li>
-          </ul>
-        </nav>
-        <button type="button" id="theme-toggle" class="theme-toggle-btn">
-          <span id="theme-toggle-label">テーマ: 自動</span>
-        </button>
+          <nav aria-label="メイン" data-i18n-aria-label="nav.ariaLabel">
+            <ul class="nav-list">
+              <li><a href="#features" data-i18n="nav.features">特徴</a></li>
+              <li><a href="#quickstart" data-i18n="nav.quickstart">クイックスタート</a></li>
+              <li><a href="#cli-builder" data-i18n="nav.cliBuilder">コマンド生成</a></li>
+              <li><a href="#cli-usage" data-i18n="nav.cliUsage">CLIの使い方</a></li>
+              <li><a href="#csv-spec" data-i18n="nav.csvSpec">CSV出力仕様</a></li>
+              <li><a href="#library-api" data-i18n="nav.libraryApi">Java API</a></li>
+            </ul>
+          </nav>
+          <div class="lang-switcher" role="group" aria-label="言語選択" data-i18n-aria-label="lang.groupAria">
+            <button type="button" class="lang-btn" data-lang="ja" aria-pressed="true" lang="ja">日本語</button>
+            <button type="button" class="lang-btn" data-lang="en" aria-pressed="false" lang="en">English</button>
+          </div>
+          <button type="button" id="theme-toggle" class="theme-toggle-btn">
+            <span id="theme-toggle-label">テーマ: 自動</span>
+          </button>
       </div>
     </div>
   </header>
@@ -113,27 +117,28 @@
         <div class="hero-top">
           <div class="hero-copy">
             <div class="hero-eyebrow">Java Library &amp; CLI Tool (IPv4 / IPv6 WHOIS Resolver)</div>
-            <h1>複数のIPアドレスをWHOIS検索し、CIDR単位で高速・安全に集約</h1>
-            <p class="hero-lead">
+            <h1 data-i18n="hero.title">複数のIPアドレスをWHOIS検索し、CIDR単位で高速・安全に集約</h1>
+            <p class="hero-lead" data-i18n-html="hero.lead">
               <code>ip2cidr</code> は、大量のIPv4 / IPv6アドレスを入力として受け取り、OSの <code>whois</code>
               コマンドからCIDRブロック・国コード・登録組織・管理者/技術/Abuse連絡先を自動抽出して整理するJavaライブラリおよびCLIツールです。
             </p>
             <div class="hero-actions">
-              <a href="#quickstart" class="btn btn-primary">クイックスタートを見る</a>
-              <a href="#cli-builder" class="btn btn-secondary">対話型コマンドビルダーを試す</a>
+              <a href="#quickstart" class="btn btn-primary" data-i18n="hero.btnQuickstart">クイックスタートを見る</a>
+              <a href="#cli-builder" class="btn btn-secondary" data-i18n="hero.btnBuilder">対話型コマンドビルダーを試す</a>
               <a href="https://github.com/pawn-4-git/ip2cidr" class="btn btn-secondary" target="_blank"
-                rel="noopener noreferrer">GitHub リポジトリ</a>
+              rel="noopener noreferrer" data-i18n="hero.btnRepo">GitHub リポジトリ</a>
             </div>
           </div>
           <div class="hero-visual">
-            <img src="ip2cidr.png" alt="ip2cidr アイコン" class="hero-icon" width="140" height="181" fetchpriority="high">
+            <img src="ip2cidr.png" alt="ip2cidr アイコン" data-i18n-alt="hero.iconAlt" class="hero-icon" width="140"
+              height="181" fetchpriority="high">
           </div>
         </div>
         <ul class="hero-highlights" role="list">
-          <li>同一CIDRへの自動名寄せ・集約</li>
-          <li>IP昇順ソート＆直前CIDR判定でWHOISを節約</li>
-          <li>5秒間隔 / ヒット時0.5秒 / 制限時60秒×10回リトライ</li>
-          <li>ARIN / APNIC / RIPE / LACNIC / AFRINIC / JPNIC 対応</li>
+          <li data-i18n="hero.highlight1">同一CIDRへの自動名寄せ・集約</li>
+          <li data-i18n="hero.highlight2">IP昇順ソート＆直前CIDR判定でWHOISを節約</li>
+          <li data-i18n="hero.highlight3">5秒間隔 / ヒット時0.5秒 / 制限時60秒×10回リトライ</li>
+          <li data-i18n="hero.highlight4">ARIN / APNIC / RIPE / LACNIC / AFRINIC / JPNIC 対応</li>
         </ul>
       </div>
     </section>
@@ -142,33 +147,35 @@
     <section id="features" class="section">
       <div class="container">
         <div class="section-header">
-          <h2>主な特徴と解決アルゴリズム</h2>
-          <p>WHOISサーバーへの負荷とレートリミットを抑えながら、複数のIPアドレスを最小限のクエリ数で正確にCIDRへマッピングします。</p>
+          <h2 data-i18n="features.title">主な特徴と解決アルゴリズム</h2>
+          <p data-i18n="features.subtitle">WHOISサーバーへの負荷とレートリミットを抑えながら、複数のIPアドレスを最小限のクエリ数で正確にCIDRへマッピングします。</p>
         </div>
 
         <ul class="feature-grid" role="list">
           <li class="feature-card">
             <div class="feature-icon" aria-hidden="true">01</div>
-            <h3>同一CIDRの自動集約</h3>
-            <p>複数の入力IPアドレスが同じCIDRブロックに属する場合、1つの <code>WhoisCidrInfo</code>
+            <h3 data-i18n="features.card1.title">同一CIDRの自動集約</h3>
+            <p data-i18n-html="features.card1.desc">複数の入力IPアドレスが同じCIDRブロックに属する場合、1つの <code>WhoisCidrInfo</code>
               インスタンスに統合し、該当した入力IP一覧（<code>Matched IPs</code>）を保持します。</p>
           </li>
           <li class="feature-card">
             <div class="feature-icon" aria-hidden="true">02</div>
-            <h3>昇順ソート＋直前CIDR即時判定</h3>
-            <p>入力されたIP群を最初に数値昇順でソートします。直前に解決したCIDR範囲に次のIPが含まれるかを即座にチェックし、<code>whois</code> 実行をスキップしてキャッシュを再利用します。</p>
+            <h3 data-i18n="features.card2.title">昇順ソート＋直前CIDR即時判定</h3>
+            <p data-i18n-html="features.card2.desc">
+              入力されたIP群を最初に数値昇順でソートします。直前に解決したCIDR範囲に次のIPが含まれるかを即座にチェックし、<code>whois</code> 実行をスキップしてキャッシュを再利用します。</p>
           </li>
           <li class="feature-card">
             <div class="feature-icon" aria-hidden="true">03</div>
-            <h3>堅牢なレートリミット制御</h3>
-            <p>
+            <h3 data-i18n="features.card3.title">堅牢なレートリミット制御</h3>
+            <p data-i18n-html="features.card3.desc">
               新規検索時はデフォルト<strong>5秒間隔</strong>、キャッシュヒット時も<strong>0.5秒待機</strong>してバーストを防止。万一レートリミット応答を受けた場合は<strong>60秒待機×最大10回</strong>まで自動リトライします。
             </p>
           </li>
           <li class="feature-card">
             <div class="feature-icon" aria-hidden="true">04</div>
-            <h3>世界中のRIR・JPNICフォーマット対応</h3>
-            <p>ARIN / APNIC / RIPE / LACNIC / AFRINIC / JPNIC に対応。明示的な <code>CIDR:</code> 行がない場合でも <code>inetnum</code>
+            <h3 data-i18n="features.card4.title">世界中のRIR・JPNICフォーマット対応</h3>
+            <p data-i18n-html="features.card4.desc">ARIN / APNIC / RIPE / LACNIC / AFRINIC / JPNIC に対応。明示的な
+              <code>CIDR:</code> 行がない場合でも <code>inetnum</code>
               や <code>NetRange</code> のIP範囲からCIDRを自動算出します。</p>
           </li>
         </ul>
@@ -176,23 +183,23 @@
         <ol class="pipeline-steps" role="list">
           <li class="pipeline-step">
             <span class="step-number">STEP 1</span>
-            <h3>IPアドレスの数値昇順ソート</h3>
-            <p>IPv4 / IPv6アドレスを解析し、近接するIPアドレスが連続して処理されるように数値昇順で並び替えます。</p>
+            <h3 data-i18n="features.step1.title">IPアドレスの数値昇順ソート</h3>
+            <p data-i18n="features.step1.desc">IPv4 / IPv6アドレスを解析し、近接するIPアドレスが連続して処理されるように数値昇順で並び替えます。</p>
           </li>
           <li class="pipeline-step">
             <span class="step-number">STEP 2</span>
-            <h3>直前CIDR・キャッシュ照合</h3>
-            <p>直前に解決したCIDRブロック（および既知キャッシュ）に包含されるか判定。ヒット時は0.5秒待機のみでWHOISをスキップします。</p>
+            <h3 data-i18n="features.step2.title">直前CIDR・キャッシュ照合</h3>
+            <p data-i18n="features.step2.desc">直前に解決したCIDRブロック（および既知キャッシュ）に包含されるか判定。ヒット時は0.5秒待機のみでWHOISをスキップします。</p>
           </li>
           <li class="pipeline-step">
             <span class="step-number">STEP 3</span>
-            <h3>WHOIS実行＆自動リトライ</h3>
-            <p>未解決IPのみ5秒間隔で <code>whois</code> を実行。制限検知時は60秒待機して最大10回リトライします。</p>
+            <h3 data-i18n="features.step3.title">WHOIS実行＆自動リトライ</h3>
+            <p data-i18n-html="features.step3.desc">未解決IPのみ5秒間隔で <code>whois</code> を実行。制限検知時は60秒待機して最大10回リトライします。</p>
           </li>
           <li class="pipeline-step">
             <span class="step-number">STEP 4</span>
-            <h3>出力整形（CIDR単位 / IP単位）</h3>
-            <p>標準出力またはUTF-8 CSVファイル（数式インジェクション対策済み）へCIDR単位またはIP単位で出力します。</p>
+            <h3 data-i18n="features.step4.title">出力整形（CIDR単位 / IP単位）</h3>
+            <p data-i18n="features.step4.desc">標準出力またはUTF-8 CSVファイル（数式インジェクション対策済み）へCIDR単位またはIP単位で出力します。</p>
           </li>
         </ol>
       </div>
@@ -202,41 +209,46 @@
     <section id="quickstart" class="section">
       <div class="container">
         <div class="section-header">
-          <h2>クイックスタート（要件・インストール・ビルド）</h2>
-          <p>GitHub Releases からビルド済みJARをダウンロードするか、ソースコードから Gradle でビルドしてすぐに利用を開始できます。</p>
+          <h2 data-i18n="quickstart.title">クイックスタート（要件・インストール・ビルド）</h2>
+          <p data-i18n="quickstart.subtitle">GitHub Releases からビルド済みJARをダウンロードするか、ソースコードから Gradle でビルドしてすぐに利用を開始できます。
+          </p>
         </div>
 
         <div class="callout">
-          <span class="callout-title">動作要件</span>
-          <p>実行環境に <strong>Java（JDK 21〜25推奨）</strong> および OS標準の <strong><code>whois</code> コマンド</strong>（macOS / Linux
+            <span class="callout-title" data-i18n="quickstart.reqTitle">動作要件</span>
+          <p data-i18n-html="quickstart.reqDesc">実行環境に <strong>Java（JDK 21〜25推奨）</strong> および OS標準の
+            <strong><code>whois</code> コマンド</strong>（macOS / Linux
             標準搭載）がインストールされていることを確認してください。</p>
         </div>
 
-        <h3>方法A: GitHub Releases からJARを取得して実行</h3>
-        <p><a href="https://github.com/pawn-4-git/ip2cidr/releases" target="_blank" rel="noopener noreferrer">GitHub
-            Releases ページ</a>から最新版の <code>ip2cidr-&lt;version&gt;.jar</code> をダウンロードし、そのまま <code>java -jar</code>
-          で実行できます。</p>
+            <h3 data-i18n="quickstart.methodATitle">方法A: GitHub Releases からJARを取得して実行</h3>
+            <p data-i18n-html="quickstart.methodADesc"><a href="https://github.com/pawn-4-git/ip2cidr/releases"
+                target="_blank" rel="noopener noreferrer">GitHub
+                Releases ページ</a>から最新版の <code>ip2cidr-&lt;version&gt;.jar</code> をダウンロードし、そのまま <code>java -jar</code>
+              で実行できます。</p>
 
-        <div class="code-card">
-          <div class="code-card-header">
-            <span>Terminal (Quick Run)</span>
-            <button type="button" class="copy-btn" data-copy-target="code-quick-run"
-              aria-label="クイック実行コマンドをコピー">コピー</button>
-          </div>
-          <pre tabindex="0"><code id="code-quick-run">java -jar ip2cidr-1.0.0.jar 8.8.8.8 8.8.8.4 1.1.1.1</code></pre>
-        </div>
+            <div class="code-card">
+              <div class="code-card-header">
+                <span>Terminal (Quick Run)</span>
+                <button type="button" class="copy-btn" data-copy-target="code-quick-run"
+                aria-label="クイック実行コマンドをコピー" data-i18n-aria-label="copyAria.quickRun">コピー</button>
+              </div>
+              <pre
+                tabindex="0"><code id="code-quick-run">java -jar ip2cidr-1.0.0.jar 8.8.8.8 8.8.8.4 1.1.1.1</code></pre>
+            </div>
 
-        <h3>方法B: ソースコードからビルド・テスト実行</h3>
-        <p>リポジトリをクローンして <code>gradle build</code> を実行すると、<code>build/libs/ip2cidr-1.0.0.jar</code>
-          が生成されます。任意のバージョン番号を付与する場合は <code>-PreleaseVersion=x.y.z</code> を指定できます。</p>
+              <h3 data-i18n="quickstart.methodBTitle">方法B: ソースコードからビルド・テスト実行</h3>
+              <p data-i18n-html="quickstart.methodBDesc">リポジトリをクローンして <code>gradle build</code>
+                を実行すると、<code>build/libs/ip2cidr-1.0.0.jar</code>
+                が生成されます。任意のバージョン番号を付与する場合は <code>-PreleaseVersion=x.y.z</code> を指定できます。</p>
 
-        <div class="code-card">
-          <div class="code-card-header">
-            <span>Terminal (Gradle Build &amp; Test)</span>
-            <button type="button" class="copy-btn" data-copy-target="code-gradle-build"
-              aria-label="Gradleビルドコマンドをコピー">コピー</button>
-          </div>
-          <pre tabindex="0"><code id="code-gradle-build">git clone https://github.com/pawn-4-git/ip2cidr.git
+              <div class="code-card">
+                <div class="code-card-header">
+                  <span>Terminal (Gradle Build &amp; Test)</span>
+                  <button type="button" class="copy-btn" data-copy-target="code-gradle-build"
+                  aria-label="Gradleビルドコマンドをコピー" data-i18n-aria-label="copyAria.gradleBuild">コピー</button>
+                </div>
+          <pre tabindex="0"><code id="code-gradle-build" data-i18n="quickstart.codeGradleBuild">git clone https://github.com/pawn-4-git/ip2cidr.git
 cd ip2cidr
 
 # ビルド（build/libs/ip2cidr-1.0.0.jar を生成）
@@ -244,7 +256,7 @@ gradle build
 
 # テストとJaCoCoカバレッジレポート生成
 gradle test</code></pre>
-        </div>
+              </div>
       </div>
     </section>
 
@@ -252,53 +264,57 @@ gradle test</code></pre>
     <section id="cli-builder" class="section">
       <div class="container">
         <div class="section-header">
-          <h2>対話型 CLI コマンドビルダー &amp; 出力シミュレーター</h2>
-          <p>入力方法・出力単位（CIDR単位 / IP単位）・出力先（標準出力 / CSV）を選択すると、対応する実行コマンドと出力結果の例をリアルタイムに確認できます。</p>
+          <h2 data-i18n="builder.title">対話型 CLI コマンドビルダー &amp; 出力シミュレーター</h2>
+          <p data-i18n="builder.subtitle">入力方法・出力単位（CIDR単位 / IP単位）・出力先（標準出力 /
+            CSV）を選択すると、対応する実行コマンドと出力結果の例をリアルタイムに確認できます。</p>
         </div>
 
         <div class="builder-grid">
           <form class="builder-form" id="cli-builder-form" onsubmit="return false;">
             <div class="form-group">
-              <label for="builder-input-source">1. IPアドレスの入力方法</label>
-              <span id="hint-input-source" class="form-hint">デフォルト: コマンドライン引数（引数・ファイル未指定時は標準入力）</span>
+              <label for="builder-input-source" data-i18n="builder.inputLabel">1. IPアドレスの入力方法</label>
+              <span id="hint-input-source" class="form-hint" data-i18n="builder.inputHint">デフォルト:
+                コマンドライン引数（引数・ファイル未指定時は標準入力）</span>
               <select id="builder-input-source" class="form-control" aria-describedby="hint-input-source">
-                <option value="args">コマンドライン引数で直接指定（デフォルト）</option>
-                <option value="file">ファイルから読み込む (-f ips.txt)</option>
-                <option value="stdin">標準入力（パイプ）から渡す (cat ips.txt | ...)</option>
+                <option value="args" data-i18n="builder.inputOptArgs">コマンドライン引数で直接指定（デフォルト）</option>
+                <option value="file" data-i18n="builder.inputOptFile">ファイルから読み込む (-f ips.txt)</option>
+                <option value="stdin" data-i18n="builder.inputOptStdin">標準入力（パイプ）から渡す (cat ips.txt | ...)</option>
               </select>
             </div>
 
             <div class="form-group">
-              <label for="builder-output-mode">2. 出力単位モード (-m / --mode)</label>
-              <span id="hint-output-mode" class="form-hint">デフォルト: cidr（CIDRブロック単位で集約）</span>
+              <label for="builder-output-mode" data-i18n="builder.modeLabel">2. 出力単位モード (-m / --mode)</label>
+              <span id="hint-output-mode" class="form-hint" data-i18n="builder.modeHint">デフォルト:
+                cidr（CIDRブロック単位で集約）</span>
               <select id="builder-output-mode" class="form-control" aria-describedby="hint-output-mode">
-                <option value="cidr">CIDR単位で集約して出力（デフォルト: cidr）</option>
-                <option value="ip">IPアドレス単位で展開して出力 (-m ip)</option>
-                <option value="cidr-explicit">CIDR単位を明示指定 (--cidr)</option>
+                <option value="cidr" data-i18n="builder.modeOptCidr">CIDR単位で集約して出力（デフォルト: cidr）</option>
+                <option value="ip" data-i18n="builder.modeOptIp">IPアドレス単位で展開して出力 (-m ip)</option>
+                <option value="cidr-explicit" data-i18n="builder.modeOptCidrExplicit">CIDR単位を明示指定 (--cidr)</option>
               </select>
             </div>
 
             <div class="form-group">
-              <label for="builder-output-dest">3. 出力先フォーマット</label>
-              <span id="hint-output-dest" class="form-hint">デフォルト: 標準出力（--csv 未指定時）</span>
+              <label for="builder-output-dest" data-i18n="builder.destLabel">3. 出力先フォーマット</label>
+              <span id="hint-output-dest" class="form-hint" data-i18n="builder.destHint">デフォルト: 標準出力（--csv 未指定時）</span>
               <select id="builder-output-dest" class="form-control" aria-describedby="hint-output-dest">
-                <option value="stdout">標準出力へテキスト表示（デフォルト）</option>
-                <option value="csv">CSVファイルへ書き出し (--csv)</option>
+                <option value="stdout" data-i18n="builder.destOptStdout">標準出力へテキスト表示（デフォルト）</option>
+                <option value="csv" data-i18n="builder.destOptCsv">CSVファイルへ書き出し (--csv)</option>
               </select>
             </div>
 
             <div class="checkbox-row">
               <input type="checkbox" id="builder-include-raw">
-              <label for="builder-include-raw">生のWHOIS出力全文を含める (<code>--raw</code> / デフォルト: OFF)</label>
+              <label for="builder-include-raw" data-i18n-html="builder.rawLabel">生のWHOIS出力全文を含める (<code>--raw</code> /
+                デフォルト: OFF)</label>
             </div>
           </form>
 
           <div class="builder-output">
             <div class="code-card">
               <div class="code-card-header">
-                <span>生成されたコマンド</span>
+                <span data-i18n="builder.generatedCmdTitle">生成されたコマンド</span>
                 <button type="button" class="copy-btn" data-copy-target="builder-generated-cmd"
-                  aria-label="生成されたCLIコマンドをコピー">コピー</button>
+                aria-label="生成されたCLIコマンドをコピー" data-i18n-aria-label="copyAria.generatedCmd">コピー</button>
               </div>
               <pre
                 tabindex="0"><code id="builder-generated-cmd">java -jar build/libs/ip2cidr-1.0.0.jar 8.8.8.8 8.8.8.4 1.1.1.1</code></pre>
@@ -308,7 +324,7 @@ gradle test</code></pre>
               <div class="code-card-header">
                 <span id="builder-preview-label">標準出力プレビュー（CIDR単位モード）</span>
                 <button type="button" class="copy-btn" data-copy-target="builder-generated-output"
-                  aria-label="出力プレビューをコピー">コピー</button>
+                aria-label="出力プレビューをコピー" data-i18n-aria-label="copyAria.generatedOutput">コピー</button>
               </div>
               <pre tabindex="0"><code id="builder-generated-output"></code></pre>
             </div>
@@ -321,95 +337,102 @@ gradle test</code></pre>
     <section id="cli-usage" class="section">
       <div class="container">
         <div class="section-header">
-          <h2>CLIとしての使い方・オプション一覧</h2>
-          <p>コマンドライン引数・テキストファイル・標準入力の3通りの入力方式に対応し、用途に応じてテキスト出力とCSV出力を切り替えられます。</p>
+          <h2 data-i18n="cli.title">CLIとしての使い方・オプション一覧</h2>
+          <p data-i18n="cli.subtitle">コマンドライン引数・テキストファイル・標準入力の3通りの入力方式に対応し、用途に応じてテキスト出力とCSV出力を切り替えられます。</p>
         </div>
 
         <div class="table-wrapper">
           <table>
-            <caption>CLI オプション・引数のリファレンスとデフォルト値</caption>
+            <caption data-i18n="cli.tableCaption">CLI オプション・引数のリファレンスとデフォルト値</caption>
             <thead>
               <tr>
-                <th scope="col">パラメータ / オプション</th>
-                <th scope="col">短縮・別名</th>
-                <th scope="col">引数</th>
-                <th scope="col">デフォルト値（未指定時）</th>
-                <th scope="col">説明</th>
+                <th scope="col" data-i18n="cli.thParam">パラメータ / オプション</th>
+                <th scope="col" data-i18n="cli.thAlias">短縮・別名</th>
+                <th scope="col" data-i18n="cli.thArg">引数</th>
+                <th scope="col" data-i18n="cli.thDefault">デフォルト値（未指定時）</th>
+                <th scope="col" data-i18n="cli.thDesc">説明</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td><code>&lt;ip1&gt; &lt;ip2&gt; ...</code></td>
-                <td>位置引数</td>
-                <td>IPアドレス（複数可）</td>
-                <td><strong>標準入力 (<code>stdin</code>) から読み取り</strong><br><small>（※<code>--file</code> も未指定の場合）</small>
+                <td data-i18n="cli.row1.alias">位置引数</td>
+                <td data-i18n="cli.row1.arg">IPアドレス（複数可）</td>
+                <td data-i18n-html="cli.row1.default"><strong>標準入力 (<code>stdin</code>)
+                    から読み取り</strong><br><small>（※<code>--file</code> も未指定の場合）</small>
                 </td>
-                <td>解決対象のIPv4 / IPv6アドレスを直接指定します。位置引数と <code>--file</code> の両方が省略された場合、自動的に標準入力から1行1IPで読み取ります。</td>
+                <td data-i18n-html="cli.row1.desc">解決対象のIPv4 / IPv6アドレスを直接指定します。位置引数と <code>--file</code>
+                  の両方が省略された場合、自動的に標準入力から1行1IPで読み取ります。</td>
               </tr>
               <tr>
                 <td><code>--file</code></td>
                 <td><code>-f</code></td>
                 <td><code>&lt;path&gt;</code></td>
-                <td><strong>なし</strong><br><small>（位置引数または標準入力を使用）</small></td>
-                <td>指定したテキストファイル（UTF-8）から1行1IP形式でIPアドレスを読み込みます。空行や <code>#</code>
+                <td data-i18n-html="cli.row2.default"><strong>なし</strong><br><small>（位置引数または標準入力を使用）</small></td>
+                <td data-i18n-html="cli.row2.desc">指定したテキストファイル（UTF-8）から1行1IP形式でIPアドレスを読み込みます。空行や <code>#</code>
                   で始まるコメント行は無視されます。位置引数と併用した場合は両方のIPが対象になります。</td>
               </tr>
               <tr>
                 <td><code>--csv</code></td>
                 <td><code>-c</code>, <code>-o</code>, <code>--output</code>, <code>csv</code></td>
                 <td><code>&lt;path&gt;</code></td>
-                <td><strong>なし（標準出力 <code>stdout</code> へテキスト出力）</strong></td>
-                <td>解決結果をUTF-8のCSVファイルとして指定パスに書き出します（親ディレクトリが存在しない場合は自動作成されます）。未指定時は標準出力にテキスト形式で表示します。</td>
+                <td data-i18n-html="cli.row3.default"><strong>なし（標準出力 <code>stdout</code> へテキスト出力）</strong></td>
+                <td data-i18n="cli.row3.desc">
+                  解決結果をUTF-8のCSVファイルとして指定パスに書き出します（親ディレクトリが存在しない場合は自動作成されます）。未指定時は標準出力にテキスト形式で表示します。</td>
               </tr>
               <tr>
                 <td><code>--mode</code></td>
                 <td><code>-m</code></td>
                 <td><code>cidr | ip</code></td>
-                <td><strong><code>cidr</code>（CIDRブロック単位）</strong></td>
-                <td>出力単位を切り替えます。デフォルトは <code>cidr</code>（同一CIDRを1レコードに集約）で、<code>ip</code>
+                <td data-i18n-html="cli.row4.default"><strong><code>cidr</code>（CIDRブロック単位）</strong></td>
+                <td data-i18n-html="cli.row4.desc">出力単位を切り替えます。デフォルトは
+                  <code>cidr</code>（同一CIDRを1レコードに集約）で、<code>ip</code>
                   を指定すると1レコード1入力IPアドレス単位で展開して出力します。</td>
               </tr>
               <tr>
                 <td><code>--cidr</code></td>
                 <td>—</td>
-                <td>なし</td>
-                <td><strong>有効（デフォルト: <code>cidr</code> モード）</strong></td>
-                <td><code>--mode cidr</code> のショートハンドです。オプション未指定時のデフォルト状態と同じくCIDR単位で出力します。</td>
+                <td data-i18n="cli.argNone">なし</td>
+                <td data-i18n-html="cli.row5.default"><strong>有効（デフォルト: <code>cidr</code> モード）</strong></td>
+                <td data-i18n-html="cli.row5.desc"><code>--mode cidr</code>
+                  のショートハンドです。オプション未指定時のデフォルト状態と同じくCIDR単位で出力します。</td>
               </tr>
               <tr>
                 <td><code>--ip</code></td>
                 <td>—</td>
-                <td>なし</td>
-                <td><strong>無効（デフォルトは <code>cidr</code> モード）</strong></td>
-                <td><code>--mode ip</code> のショートハンドです。指定すると出力単位をIPアドレス単位に切り替えます。</td>
+                <td data-i18n="cli.argNone">なし</td>
+                <td data-i18n-html="cli.row6.default"><strong>無効（デフォルトは <code>cidr</code> モード）</strong></td>
+                <td data-i18n-html="cli.row6.desc"><code>--mode ip</code> のショートハンドです。指定すると出力単位をIPアドレス単位に切り替えます。</td>
               </tr>
               <tr>
                 <td><code>--raw</code></td>
                 <td>—</td>
-                <td>なし</td>
-                <td><strong><code>false</code>（生WHOIS出力を含めない）</strong></td>
-                <td>デフォルトでは抽出された構造化項目のみを出力します。<code>--raw</code> を指定すると、<code>whois</code>
+                <td data-i18n="cli.argNone">なし</td>
+                <td data-i18n-html="cli.row7.default"><strong><code>false</code>（生WHOIS出力を含めない）</strong></td>
+                <td data-i18n-html="cli.row7.desc">デフォルトでは抽出された構造化項目のみを出力します。<code>--raw</code>
+                  を指定すると、<code>whois</code>
                   コマンドの生出力全文（<code>RawWhoisOutput</code>）を末尾に追加します。</td>
               </tr>
               <tr>
                 <td><code>--help</code></td>
                 <td><code>-h</code></td>
-                <td>なし</td>
-                <td><strong><code>false</code>（通常実行）</strong></td>
-                <td>ヘルプメッセージを表示して終了します（IPアドレスが引数・ファイル・標準入力のいずれからも渡されなかった場合もデフォルトでヘルプが表示されます）。</td>
+                <td data-i18n="cli.argNone">なし</td>
+                <td data-i18n-html="cli.row8.default"><strong><code>false</code>（通常実行）</strong></td>
+                <td data-i18n="cli.row8.desc">ヘルプメッセージを表示して終了します（IPアドレスが引数・ファイル・標準入力のいずれからも渡されなかった場合もデフォルトでヘルプが表示されます）。
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <h3>よく使うCLI実行パターン</h3>
+        <h3 data-i18n="cli.examplesTitle">よく使うCLI実行パターン</h3>
         <div class="code-card">
           <div class="code-card-header">
             <span>Terminal (CLI Examples)</span>
             <button type="button" class="copy-btn" data-copy-target="code-cli-examples"
-              aria-label="CLI実行パターン集をコピー">コピー</button>
+            aria-label="CLI実行パターン集をコピー" data-i18n-aria-label="copyAria.cliExamples">コピー</button>
           </div>
-          <pre tabindex="0"><code id="code-cli-examples"># 1. 引数でIPアドレスを渡す場合（標準出力・CIDR単位）
+          <pre tabindex="0"><code id="code-cli-examples" data-i18n="cli.codeExamples"># 1. 引数でIPアドレスを渡す場合（標準出力・CIDR単位）
 java -jar build/libs/ip2cidr-1.0.0.jar 8.8.8.8 8.8.8.4 1.1.1.1
 
 # 2. ファイルからIPアドレスリストを読み込む場合（#コメント行・空行は自動スキップ）
@@ -431,15 +454,16 @@ java -jar build/libs/ip2cidr-1.0.0.jar -f ips.txt -m ip --csv result_ip.csv
 java -jar build/libs/ip2cidr-1.0.0.jar --raw 8.8.8.8</code></pre>
         </div>
 
-        <h3>入力ファイル（<code>ips.txt</code>）の記述例</h3>
-        <p>IPv4アドレスとIPv6アドレスを混在させて記述できます。先頭が <code>#</code> の行および空行は自動的にスキップされます。</p>
+        <h3 data-i18n-html="cli.sampleFileTitle">入力ファイル（<code>ips.txt</code>）の記述例</h3>
+        <p data-i18n-html="cli.sampleFileDesc">IPv4アドレスとIPv6アドレスを混在させて記述できます。先頭が <code>#</code> の行および空行は自動的にスキップされます。
+        </p>
         <div class="code-card">
           <div class="code-card-header">
             <span>ips.txt</span>
             <button type="button" class="copy-btn" data-copy-target="code-ips-txt"
-              aria-label="ips.txtのサンプルをコピー">コピー</button>
+            aria-label="ips.txtのサンプルをコピー" data-i18n-aria-label="copyAria.ipsTxt">コピー</button>
           </div>
-          <pre tabindex="0"><code id="code-ips-txt"># Google Public DNS (同一CIDRに集約されます)
+          <pre tabindex="0"><code id="code-ips-txt" data-i18n="cli.codeIpsTxt"># Google Public DNS (同一CIDRに集約されます)
 8.8.8.8
 8.8.8.4
 
@@ -454,58 +478,62 @@ java -jar build/libs/ip2cidr-1.0.0.jar --raw 8.8.8.8</code></pre>
     <section id="csv-spec" class="section">
       <div class="container">
         <div class="section-header">
-          <h2>CSV出力フォーマット仕様</h2>
-          <p><code>--csv &lt;path&gt;</code> オプション（または <code>CsvFormatter</code> クラス）で出力されるCSVファイルのカラム構成とセキュリティ仕様です。</p>
+          <h2 data-i18n="csv.title">CSV出力フォーマット仕様</h2>
+          <p data-i18n-html="csv.subtitle"><code>--csv &lt;path&gt;</code> オプション（または <code>CsvFormatter</code>
+            クラス）で出力されるCSVファイルのカラム構成とセキュリティ仕様です。</p>
         </div>
 
         <div class="split-grid">
           <div class="panel-card">
-            <h3>CIDR単位モード（デフォルト: <code>-m cidr</code>）</h3>
-            <p>1行につき1つのCIDRブロックを出力します。同一CIDRに属する複数の入力IPは <code>MatchedIPs</code> カラムにセミコロン区切り（<code>; </code>）で格納されます。
+            <h3 data-i18n-html="csv.cidrTitle">CIDR単位モード（デフォルト: <code>-m cidr</code>）</h3>
+            <p data-i18n-html="csv.cidrDesc">1行につき1つのCIDRブロックを出力します。同一CIDRに属する複数の入力IPは <code>MatchedIPs</code>
+              カラムにセミコロン区切り（<code>; </code>）で格納されます。
             </p>
             <ol>
-              <li><code>CIDR</code> — 代表CIDR（例: <code>8.8.8.0/24</code>）</li>
-              <li><code>NetworkIP</code> — ネットワークアドレス（例: <code>8.8.8.0</code>）</li>
-              <li><code>PrefixLength</code> — プレフィックス長（例: <code>24</code>）</li>
-              <li><code>AllCIDRs</code> — 検出された全CIDR一覧（<code>; </code>区切り）</li>
-              <li><code>IPRange</code> — IP範囲表記（例: <code>8.8.8.0 - 8.8.8.255</code>）</li>
-              <li><code>MatchedIPs</code> — 該当した入力IP一覧（<code>; </code>区切り）</li>
-              <li><code>Country</code> — 国コード（例: <code>US</code>, <code>JP</code>）</li>
-              <li><code>Registrant</code> — 登録組織名・登録者名</li>
-              <li><code>NetName</code> — ネットワーク名</li>
-              <li><code>Descriptions</code> — 説明・備考情報（<code> | </code>区切り）</li>
-              <li><code>AdminContacts</code> — 管理者連絡先（<code>; </code>区切り）</li>
-              <li><code>TechContacts</code> — 技術連絡先（<code>; </code>区切り）</li>
-              <li><code>AbuseContacts</code> — Abuse連絡先（<code>; </code>区切り）</li>
-              <li><code>RawWhoisOutput</code> — 生のWHOIS出力（<code>--raw</code> 指定時のみ）</li>
+              <li data-i18n-html="csv.cidrCol1"><code>CIDR</code> — 代表CIDR（例: <code>8.8.8.0/24</code>）</li>
+              <li data-i18n-html="csv.cidrCol2"><code>NetworkIP</code> — ネットワークアドレス（例: <code>8.8.8.0</code>）</li>
+              <li data-i18n-html="csv.cidrCol3"><code>PrefixLength</code> — プレフィックス長（例: <code>24</code>）</li>
+              <li data-i18n-html="csv.cidrCol4"><code>AllCIDRs</code> — 検出された全CIDR一覧（<code>; </code>区切り）</li>
+              <li data-i18n-html="csv.cidrCol5"><code>IPRange</code> — IP範囲表記（例: <code>8.8.8.0 - 8.8.8.255</code>）</li>
+              <li data-i18n-html="csv.cidrCol6"><code>MatchedIPs</code> — 該当した入力IP一覧（<code>; </code>区切り）</li>
+              <li data-i18n-html="csv.cidrCol7"><code>Country</code> — 国コード（例: <code>US</code>, <code>JP</code>）</li>
+              <li data-i18n-html="csv.cidrCol8"><code>Registrant</code> — 登録組織名・登録者名</li>
+              <li data-i18n-html="csv.cidrCol9"><code>NetName</code> — ネットワーク名</li>
+              <li data-i18n-html="csv.cidrCol10"><code>Descriptions</code> — 説明・備考情報（<code> | </code>区切り）</li>
+              <li data-i18n-html="csv.cidrCol11"><code>AdminContacts</code> — 管理者連絡先（<code>; </code>区切り）</li>
+              <li data-i18n-html="csv.cidrCol12"><code>TechContacts</code> — 技術連絡先（<code>; </code>区切り）</li>
+              <li data-i18n-html="csv.cidrCol13"><code>AbuseContacts</code> — Abuse連絡先（<code>; </code>区切り）</li>
+              <li data-i18n-html="csv.cidrCol14"><code>RawWhoisOutput</code> — 生のWHOIS出力（<code>--raw</code> 指定時のみ）</li>
             </ol>
           </div>
 
           <div class="panel-card">
-            <h3>IP単位モード（<code>-m ip</code> / <code>--ip</code>）</h3>
-            <p>1行につき1つの入力IPアドレスを出力します。元のIPリストと1対1で突合したい場合や、Excel / Google Sheets のVLOOKUP等で利用する場合に便利です。</p>
+            <h3 data-i18n-html="csv.ipTitle">IP単位モード（<code>-m ip</code> / <code>--ip</code>）</h3>
+            <p data-i18n="csv.ipDesc">1行につき1つの入力IPアドレスを出力します。元のIPリストと1対1で突合したい場合や、Excel / Google Sheets
+              のVLOOKUP等で利用する場合に便利です。</p>
             <ol>
-              <li><code>IPAddress</code> — 入力されたIPアドレス（例: <code>8.8.8.4</code>）</li>
-              <li><code>CIDR</code> — 所属する代表CIDR（例: <code>8.8.8.0/24</code>）</li>
-              <li><code>NetworkIP</code> — ネットワークアドレス（例: <code>8.8.8.0</code>）</li>
-              <li><code>PrefixLength</code> — プレフィックス長（例: <code>24</code>）</li>
-              <li><code>AllCIDRs</code> — 検出された全CIDR一覧（<code>; </code>区切り）</li>
-              <li><code>IPRange</code> — IP範囲表記（例: <code>8.8.8.0 - 8.8.8.255</code>）</li>
-              <li><code>Country</code> — 国コード</li>
-              <li><code>Registrant</code> — 登録組織名・登録者名</li>
-              <li><code>NetName</code> — ネットワーク名</li>
-              <li><code>Descriptions</code> — 説明・備考情報（<code> | </code>区切り）</li>
-              <li><code>AdminContacts</code> — 管理者連絡先（<code>; </code>区切り）</li>
-              <li><code>TechContacts</code> — 技術連絡先（<code>; </code>区切り）</li>
-              <li><code>AbuseContacts</code> — Abuse連絡先（<code>; </code>区切り）</li>
-              <li><code>RawWhoisOutput</code> — 生のWHOIS出力（<code>--raw</code> 指定時のみ）</li>
+              <li data-i18n-html="csv.ipCol1"><code>IPAddress</code> — 入力されたIPアドレス（例: <code>8.8.8.4</code>）</li>
+              <li data-i18n-html="csv.ipCol2"><code>CIDR</code> — 所属する代表CIDR（例: <code>8.8.8.0/24</code>）</li>
+              <li data-i18n-html="csv.cidrCol2"><code>NetworkIP</code> — ネットワークアドレス（例: <code>8.8.8.0</code>）</li>
+              <li data-i18n-html="csv.cidrCol3"><code>PrefixLength</code> — プレフィックス長（例: <code>24</code>）</li>
+              <li data-i18n-html="csv.cidrCol4"><code>AllCIDRs</code> — 検出された全CIDR一覧（<code>; </code>区切り）</li>
+              <li data-i18n-html="csv.cidrCol5"><code>IPRange</code> — IP範囲表記（例: <code>8.8.8.0 - 8.8.8.255</code>）</li>
+              <li data-i18n-html="csv.ipCol7"><code>Country</code> — 国コード</li>
+              <li data-i18n-html="csv.cidrCol8"><code>Registrant</code> — 登録組織名・登録者名</li>
+              <li data-i18n-html="csv.cidrCol9"><code>NetName</code> — ネットワーク名</li>
+              <li data-i18n-html="csv.cidrCol10"><code>Descriptions</code> — 説明・備考情報（<code> | </code>区切り）</li>
+              <li data-i18n-html="csv.cidrCol11"><code>AdminContacts</code> — 管理者連絡先（<code>; </code>区切り）</li>
+              <li data-i18n-html="csv.cidrCol12"><code>TechContacts</code> — 技術連絡先（<code>; </code>区切り）</li>
+              <li data-i18n-html="csv.cidrCol13"><code>AbuseContacts</code> — Abuse連絡先（<code>; </code>区切り）</li>
+              <li data-i18n-html="csv.cidrCol14"><code>RawWhoisOutput</code> — 生のWHOIS出力（<code>--raw</code> 指定時のみ）</li>
             </ol>
           </div>
         </div>
 
         <div class="callout callout-success">
-          <span class="callout-title">CSVインジェクション（数式実行）防止機能</span>
-          <p>外部レジストリのWHOIS応答に由来するテキストが <code>=</code>, <code>+</code>, <code>-</code>, <code>@</code>
+            <span class="callout-title" data-i18n="csv.secTitle">CSVインジェクション（数式実行）防止機能</span>
+          <p data-i18n-html="csv.secDesc">外部レジストリのWHOIS応答に由来するテキストが <code>=</code>, <code>+</code>, <code>-</code>,
+            <code>@</code>
             で始まる場合、ExcelやGoogleスプレッドシートで開いた際に数式として評価されるのを防ぐため、自動的に先頭へシングルクォート（<code>'</code>）を付与してダブルクォートでエスケープします。</p>
         </div>
       </div>
@@ -515,20 +543,21 @@ java -jar build/libs/ip2cidr-1.0.0.jar --raw 8.8.8.8</code></pre>
     <section id="library-api" class="section">
       <div class="container">
         <div class="section-header">
-          <h2>Javaライブラリとしての組み込み・APIガイド</h2>
-          <p><code>com.ip2cidr.IpToCidrResolver</code> をアプリケーションから直接呼び出して、型安全なモデルクラス（<code>WhoisCidrInfo</code>,
+          <h2 data-i18n="api.title">Javaライブラリとしての組み込み・APIガイド</h2>
+          <p data-i18n-html="api.subtitle"><code>com.ip2cidr.IpToCidrResolver</code>
+            をアプリケーションから直接呼び出して、型安全なモデルクラス（<code>WhoisCidrInfo</code>,
             <code>Cidr</code>）として結果を取得できます。
           </p>
         </div>
 
-        <h3>1. 基本的な使い方（<code>IpToCidrResolver</code>）</h3>
+        <h3 data-i18n-html="api.basicTitle">1. 基本的な使い方（<code>IpToCidrResolver</code>）</h3>
         <div class="code-card">
           <div class="code-card-header">
             <span>Example.java</span>
             <button type="button" class="copy-btn" data-copy-target="code-java-basic"
-              aria-label="Java基本サンプルコードをコピー">コピー</button>
+            aria-label="Java基本サンプルコードをコピー" data-i18n-aria-label="copyAria.javaBasic">コピー</button>
           </div>
-          <pre tabindex="0"><code id="code-java-basic">import com.ip2cidr.IpToCidrResolver;
+          <pre tabindex="0"><code id="code-java-basic" data-i18n="api.codeJavaBasic">import com.ip2cidr.IpToCidrResolver;
 import com.ip2cidr.model.WhoisCidrInfo;
 import java.util.List;
 
@@ -559,19 +588,20 @@ public class Example {
 }</code></pre>
         </div>
 
-        <h3>2. レートリミット設定のカスタマイズとCSV出力ユーティリティ</h3>
-        <p>引数なしコンストラクタ <code>new IpToCidrResolver()</code> では以下のデフォルト値が自動的に適用されます。用途に応じてコンストラクタ引数で個別にカスタマイズ可能です。</p>
+        <h3 data-i18n="api.customTitle">2. レートリミット設定のカスタマイズとCSV出力ユーティリティ</h3>
+        <p data-i18n-html="api.customDesc">引数なしコンストラクタ <code>new IpToCidrResolver()</code>
+          では以下のデフォルト値が自動的に適用されます。用途に応じてコンストラクタ引数で個別にカスタマイズ可能です。</p>
 
         <div class="table-wrapper">
           <table>
-            <caption>Java API 設定パラメータとデフォルト値一覧</caption>
+            <caption data-i18n="api.configTableCaption">Java API 設定パラメータとデフォルト値一覧</caption>
             <thead>
               <tr>
-                <th scope="col">対象クラス</th>
-                <th scope="col">パラメータ名</th>
-                <th scope="col">型</th>
-                <th scope="col">デフォルト値（定数）</th>
-                <th scope="col">説明</th>
+                <th scope="col" data-i18n="api.thClass">対象クラス</th>
+                <th scope="col" data-i18n="api.thParam">パラメータ名</th>
+                <th scope="col" data-i18n="api.thType">型</th>
+                <th scope="col" data-i18n="api.thDefault">デフォルト値（定数）</th>
+                <th scope="col" data-i18n="api.thDesc">説明</th>
               </tr>
             </thead>
             <tbody>
@@ -579,75 +609,82 @@ public class Example {
                 <td><code>IpToCidrResolver</code></td>
                 <td><code>rateLimitInterval</code></td>
                 <td><code>Duration</code></td>
-                <td><strong><code>5秒</code></strong><br><small>(<code>DEFAULT_RATE_LIMIT_INTERVAL</code>)</small></td>
-                <td>新規に <code>whois</code> コマンドを実行する際の標準待機間隔。2回目以降のWHOISクエリ実行前に待機します。</td>
+                <td data-i18n-html="api.cfg1.default">
+                  <strong><code>5秒</code></strong><br><small>(<code>DEFAULT_RATE_LIMIT_INTERVAL</code>)</small></td>
+                <td data-i18n-html="api.cfg1.desc">新規に <code>whois</code> コマンドを実行する際の標準待機間隔。2回目以降のWHOISクエリ実行前に待機します。
+                </td>
               </tr>
               <tr>
                 <td><code>IpToCidrResolver</code></td>
                 <td><code>cacheHitInterval</code></td>
                 <td><code>Duration</code></td>
-                <td>
+                <td data-i18n-html="api.cfg2.default">
                   <strong><code>0.5秒 (500ms)</code></strong><br><small>(<code>DEFAULT_CACHE_HIT_INTERVAL</code>)</small>
                 </td>
-                <td>入力IPが既に解決済みのCIDR範囲内に含まれており、<code>whois</code> 実行をスキップした際の待機時間。</td>
+                <td data-i18n-html="api.cfg2.desc">入力IPが既に解決済みのCIDR範囲内に含まれており、<code>whois</code> 実行をスキップした際の待機時間。</td>
               </tr>
               <tr>
                 <td><code>IpToCidrResolver</code></td>
                 <td><code>rateLimitCooldown</code></td>
                 <td><code>Duration</code></td>
-                <td><strong><code>1分 (60秒)</code></strong><br><small>(<code>DEFAULT_RATE_LIMIT_COOLDOWN</code>)</small>
+                <td data-i18n-html="api.cfg3.default">
+                  <strong><code>1分 (60秒)</code></strong><br><small>(<code>DEFAULT_RATE_LIMIT_COOLDOWN</code>)</small>
                 </td>
-                <td>WHOISサーバーからレートリミット応答や一時エラーを受けた際に、再試行するまで待機するクールダウン時間。</td>
+                <td data-i18n="api.cfg3.desc">WHOISサーバーからレートリミット応答や一時エラーを受けた際に、再試行するまで待機するクールダウン時間。</td>
               </tr>
               <tr>
                 <td><code>IpToCidrResolver</code></td>
                 <td><code>maxRateLimitRetries</code></td>
                 <td><code>int</code></td>
-                <td><strong><code>10回</code></strong><br><small>(<code>DEFAULT_MAX_RATE_LIMIT_RETRIES</code>)</small>
+                <td data-i18n-html="api.cfg4.default">
+                  <strong><code>10回</code></strong><br><small>(<code>DEFAULT_MAX_RATE_LIMIT_RETRIES</code>)</small>
                 </td>
-                <td>レートリミットまたはコマンドエラー発生時の最大自動リトライ回数。</td>
+                <td data-i18n="api.cfg4.desc">レートリミットまたはコマンドエラー発生時の最大自動リトライ回数。</td>
               </tr>
               <tr>
                 <td><code>IpToCidrResolver</code></td>
                 <td><code>whoisExecutor</code></td>
                 <td><code>WhoisExecutor</code></td>
                 <td><strong><code>new CommandWhoisExecutor()</code></strong></td>
-                <td>WHOIS検索を実行する実装クラス。デフォルトではOSの <code>whois</code> コマンドをサブプロセス実行します。</td>
+                <td data-i18n-html="api.cfg5.desc">WHOIS検索を実行する実装クラス。デフォルトではOSの <code>whois</code> コマンドをサブプロセス実行します。
+                </td>
               </tr>
               <tr>
                 <td><code>IpToCidrResolver</code></td>
                 <td><code>whoisParser</code></td>
                 <td><code>WhoisParser</code></td>
                 <td><strong><code>new WhoisParser()</code></strong></td>
-                <td>WHOIS応答テキストからCIDRや組織情報を抽出するパーサー実装。</td>
+                <td data-i18n="api.cfg6.desc">WHOIS応答テキストからCIDRや組織情報を抽出するパーサー実装。</td>
               </tr>
               <tr>
                 <td><code>IpToCidrResolver</code></td>
                 <td><code>sleeper</code></td>
                 <td><code>Sleeper</code></td>
                 <td><strong><code>Thread.sleep(...)</code></strong></td>
-                <td>待機処理を行う関数型インターフェース。テスト時にモックへ差し替えることで待機時間をゼロにできます。</td>
+                <td data-i18n="api.cfg7.desc">待機処理を行う関数型インターフェース。テスト時にモックへ差し替えることで待機時間をゼロにできます。</td>
               </tr>
               <tr>
                 <td><code>CommandWhoisExecutor</code></td>
                 <td><code>whoisCommand</code></td>
                 <td><code>String</code></td>
                 <td><strong><code>"whois"</code></strong><br><small>(<code>DEFAULT_COMMAND</code>)</small></td>
-                <td>プロセス実行するOSのWHOISコマンド名（または実行ファイルパス）。</td>
+                <td data-i18n="api.cfg8.desc">プロセス実行するOSのWHOISコマンド名（または実行ファイルパス）。</td>
               </tr>
               <tr>
                 <td><code>CommandWhoisExecutor</code></td>
                 <td><code>timeout</code></td>
                 <td><code>Duration</code></td>
-                <td><strong><code>30秒</code></strong><br><small>(<code>DEFAULT_TIMEOUT</code>)</small></td>
-                <td>1回の <code>whois</code> コマンド実行あたりの最大タイムアウト時間。超過時はプロセスを強制終了します。</td>
+                <td data-i18n-html="api.cfg9.default">
+                  <strong><code>30秒</code></strong><br><small>(<code>DEFAULT_TIMEOUT</code>)</small></td>
+                <td data-i18n-html="api.cfg9.desc">1回の <code>whois</code> コマンド実行あたりの最大タイムアウト時間。超過時はプロセスを強制終了します。</td>
               </tr>
               <tr>
                 <td><code>CsvFormatter</code></td>
                 <td><code>mode</code></td>
                 <td><code>OutputMode</code></td>
                 <td><strong><code>OutputMode.CIDR</code></strong></td>
-                <td>CSVの出力単位（<code>OutputMode.fromString(null)</code> または空文字の場合もデフォルトで <code>CIDR</code> が選択されます）。</td>
+                <td data-i18n-html="api.cfg10.desc">CSVの出力単位（<code>OutputMode.fromString(null)</code> または空文字の場合もデフォルトで
+                  <code>CIDR</code> が選択されます）。</td>
               </tr>
             </tbody>
           </table>
@@ -657,9 +694,9 @@ public class Example {
           <div class="code-card-header">
             <span>CustomResolverExample.java</span>
             <button type="button" class="copy-btn" data-copy-target="code-java-custom"
-              aria-label="Javaカスタム設定サンプルコードをコピー">コピー</button>
+            aria-label="Javaカスタム設定サンプルコードをコピー" data-i18n-aria-label="copyAria.javaCustom">コピー</button>
           </div>
-          <pre tabindex="0"><code id="code-java-custom">import com.ip2cidr.IpToCidrResolver;
+          <pre tabindex="0"><code id="code-java-custom" data-i18n="api.codeJavaCustom">import com.ip2cidr.IpToCidrResolver;
 import com.ip2cidr.model.WhoisCidrInfo;
 import com.ip2cidr.util.CsvFormatter;
 import com.ip2cidr.util.CsvFormatter.OutputMode;
@@ -693,68 +730,71 @@ public class CustomResolverExample {
 }</code></pre>
         </div>
 
-        <h3>3. <code>WhoisCidrInfo</code> メソッド一覧</h3>
+        <h3 data-i18n-html="api.methodsTitle">3. <code>WhoisCidrInfo</code> メソッド一覧</h3>
         <div class="table-wrapper">
           <table>
-            <caption>WhoisCidrInfo 主なゲッターメソッド</caption>
+            <caption data-i18n="api.methodsTableCaption">WhoisCidrInfo 主なゲッターメソッド</caption>
             <thead>
               <tr>
-                <th scope="col">メソッド</th>
-                <th scope="col">戻り値の型</th>
-                <th scope="col">説明</th>
+                <th scope="col" data-i18n="api.thMethod">メソッド</th>
+                <th scope="col" data-i18n="api.thReturn">戻り値の型</th>
+                <th scope="col" data-i18n="api.thDesc">説明</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td><code>getCidr()</code></td>
                 <td><code>Cidr</code></td>
-                <td>代表となるCIDRオブジェクト（<code>getIpAddress()</code> と <code>getPrefixLength()</code> を保持）を返します。</td>
+                <td data-i18n-html="api.m1.desc">代表となるCIDRオブジェクト（<code>getIpAddress()</code> と
+                  <code>getPrefixLength()</code> を保持）を返します。</td>
               </tr>
               <tr>
                 <td><code>getAllCidrs()</code></td>
                 <td><code>List&lt;Cidr&gt;</code></td>
-                <td>検出されたすべてのCIDR一覧（IP範囲が複数CIDRに分割された場合を含む）を返します。</td>
+                <td data-i18n="api.m2.desc">検出されたすべてのCIDR一覧（IP範囲が複数CIDRに分割された場合を含む）を返します。</td>
               </tr>
               <tr>
                 <td><code>getIpRange()</code></td>
                 <td><code>String</code></td>
-                <td>IPアドレス範囲表記（例: <code>"8.8.8.0 - 8.8.8.255"</code>）を返します。</td>
+                <td data-i18n-html="api.m3.desc">IPアドレス範囲表記（例: <code>"8.8.8.0 - 8.8.8.255"</code>）を返します。</td>
               </tr>
               <tr>
                 <td><code>getMatchedIpAddresses()</code></td>
                 <td><code>List&lt;String&gt;</code></td>
-                <td>このCIDR領域に分類された入力IPアドレスの一覧（重複なし）を返します。</td>
+                <td data-i18n="api.m4.desc">このCIDR領域に分類された入力IPアドレスの一覧（重複なし）を返します。</td>
               </tr>
               <tr>
                 <td><code>getCountry()</code></td>
                 <td><code>String</code></td>
-                <td>2文字の国コード（例: <code>"JP"</code>, <code>"US"</code>）を返します。</td>
+                <td data-i18n-html="api.m5.desc">2文字の国コード（例: <code>"JP"</code>, <code>"US"</code>）を返します。</td>
               </tr>
               <tr>
                 <td><code>getRegistrant()</code></td>
                 <td><code>String</code></td>
-                <td>登録組織名・登録者名（<code>org-name</code> / <code>Organization</code> / <code>組織名</code> 等）を返します。</td>
+                <td data-i18n-html="api.m6.desc">登録組織名・登録者名（<code>org-name</code> / <code>Organization</code> /
+                  <code>組織名</code> 等）を返します。</td>
               </tr>
               <tr>
                 <td><code>getNetName()</code></td>
                 <td><code>String</code></td>
-                <td>ネットワーク名（<code>netname</code> / <code>NetName</code> / <code>ネットワーク名</code>）を返します。</td>
+                <td data-i18n-html="api.m7.desc">ネットワーク名（<code>netname</code> / <code>NetName</code> /
+                  <code>ネットワーク名</code>）を返します。</td>
               </tr>
               <tr>
                 <td><code>getDescriptions()</code></td>
                 <td><code>List&lt;String&gt;</code></td>
-                <td>説明・備考情報（<code>descr</code> / <code>Comment</code> 等）のリストを返します。</td>
+                <td data-i18n-html="api.m8.desc">説明・備考情報（<code>descr</code> / <code>Comment</code> 等）のリストを返します。</td>
               </tr>
               <tr>
                 <td><code>getAdminContacts()</code> / <code>getTechContacts()</code> / <code>getAbuseContacts()</code>
                 </td>
                 <td><code>List&lt;String&gt;</code></td>
-                <td>管理者連絡先・技術連絡先・アビューズ連絡先の一覧をそれぞれ返します。</td>
+                <td data-i18n="api.m9.desc">管理者連絡先・技術連絡先・アビューズ連絡先の一覧をそれぞれ返します。</td>
               </tr>
               <tr>
                 <td><code>getRawWhoisOutput()</code></td>
                 <td><code>String</code></td>
-                <td><code>whois</code> コマンドの生出力テキスト全文を返します。</td>
+                <td data-i18n-html="api.m10.desc"><code>whois</code> コマンドの生出力テキスト全文を返します。</td>
               </tr>
             </tbody>
           </table>
@@ -774,7 +814,7 @@ public class CustomResolverExample {
             Repository</a></li>
         <li><a href="https://github.com/pawn-4-git/ip2cidr/releases" target="_blank"
             rel="noopener noreferrer">Releases</a></li>
-        <li><a href="#content">ページ先頭へ戻る</a></li>
+        <li><a href="#content" data-i18n="footer.backToTop">ページ先頭へ戻る</a></li>
       </ul>
     </div>
   </footer>
