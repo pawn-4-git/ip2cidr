@@ -95,11 +95,12 @@
         'Parses IPv4 / IPv6 addresses and sorts them in numeric ascending order so adjacent IP addresses are processed consecutively.',
       'features.step2.title': 'Previous CIDR & Cache Lookup',
       'features.step2.desc':
-        'Checks if the IP falls within the previously resolved CIDR block (or known cache). On a hit, waits only 0.5s and skips WHOIS.',
-      'features.step3.title': 'WHOIS Execution & Auto-Retry',
+        'Checks if the IP falls within the previously resolved CIDR block (including all decomposed CIDR blocks and known cache). On a hit, waits only 0.5s and skips WHOIS.',
+      'features.step3.title': 'WHOIS Execution, CIDR Decomposition & Retry',
       'features.step4.title': 'Output Formatting (Per-CIDR / Per-IP)',
       'features.step4.desc':
         'Outputs results per CIDR block or per IP address to stdout or a UTF-8 CSV file (with formula injection protection).',
+      'features.decompTitle': 'CIDR Decomposition for Unaligned IP Address Ranges',
       'quickstart.title': 'Quick Start (Requirements, Install & Build)',
       'quickstart.subtitle':
         'Download the pre-built JAR from GitHub Releases or build from source with Gradle to get started right away.',
@@ -153,25 +154,25 @@
       'cli.examplesTitle': 'Common CLI Execution Patterns',
       'cli.codeExamples': [
         '# 1. Pass IP addresses via arguments (stdout, per-CIDR mode)',
-        'java -jar build/libs/ip2cidr-1.0.0.jar 8.8.8.8 8.8.8.4 1.1.1.1',
+        'java -jar ip2cidr-1.0.0.jar 8.8.8.8 8.8.8.4 1.1.1.1',
         '',
         '# 2. Read IP address list from a file (# comment lines and blank lines are skipped)',
-        'java -jar build/libs/ip2cidr-1.0.0.jar -f ips.txt',
+        'java -jar ip2cidr-1.0.0.jar -f ips.txt',
         '',
         '# 3. Pass IP addresses via standard input (pipe)',
-        'cat ips.txt | java -jar build/libs/ip2cidr-1.0.0.jar',
+        'cat ips.txt | java -jar ip2cidr-1.0.0.jar',
         '',
         '# 4. Switch output unit to per-IP mode (1 block per IP) on stdout',
-        'java -jar build/libs/ip2cidr-1.0.0.jar -f ips.txt -m ip',
+        'java -jar ip2cidr-1.0.0.jar -f ips.txt -m ip',
         '',
         '# 5. Export to a CSV file (per-CIDR mode: default)',
-        'java -jar build/libs/ip2cidr-1.0.0.jar -f ips.txt --csv result_cidr.csv',
+        'java -jar ip2cidr-1.0.0.jar -f ips.txt --csv result_cidr.csv',
         '',
         '# 6. Export to a CSV file (per-IP mode: 1 row per IP)',
-        'java -jar build/libs/ip2cidr-1.0.0.jar -f ips.txt -m ip --csv result_ip.csv',
+        'java -jar ip2cidr-1.0.0.jar -f ips.txt -m ip --csv result_ip.csv',
         '',
         '# 7. Include full raw whois output',
-        'java -jar build/libs/ip2cidr-1.0.0.jar --raw 8.8.8.8',
+        'java -jar ip2cidr-1.0.0.jar --raw 8.8.8.8',
       ].join('\n'),
       'cli.codeIpsTxt': [
         '# Google Public DNS (aggregated into the same CIDR)',
@@ -284,9 +285,11 @@
       'features.card3.desc':
         'Waits <strong>5 seconds</strong> by default between new queries and <strong>0.5 seconds</strong> on cache hits to prevent bursts. Automatically retries up to <strong>10 times with a 60-second cooldown</strong> if rate-limited.',
       'features.card4.desc':
-        'Supports ARIN / APNIC / RIPE / LACNIC / AFRINIC / JPNIC. Automatically calculates exact CIDR blocks from <code>inetnum</code> or <code>NetRange</code> IP boundaries even when an explicit <code>CIDR:</code> line is absent.',
+        'Supports ARIN / APNIC / RIPE / LACNIC / AFRINIC / JPNIC. Automatically calculates CIDR blocks from <code>inetnum</code> or <code>NetRange</code> IP boundaries even when an explicit <code>CIDR:</code> line is absent. When an IP address range does not align to a single CIDR boundary, it is automatically decomposed into multiple exact CIDR blocks.',
       'features.step3.desc':
-        'Executes <code>whois</code> at 5-second intervals only for unresolved IPs. On rate-limit detection, waits 60 seconds and retries up to 10 times.',
+        'Executes <code>whois</code> at 5-second intervals only for unresolved IPs (waiting 60 seconds and retrying up to 10 times on rate limits). If an IP range is unaligned, it is decomposed into multiple CIDR blocks.',
+      'features.decompDesc':
+        'When the start-to-end IP address range in WHOIS (<code>inetnum</code> or <code>NetRange</code>) does not fit a single CIDR boundary (e.g. <code>192.0.2.10 - 192.0.2.25</code>), it is automatically decomposed into the minimal set of exact CIDR blocks covering that range (e.g. <code>192.0.2.10/31</code>, <code>192.0.2.12/30</code>, <code>192.0.2.16/29</code>, <code>192.0.2.24/31</code>). The block containing the queried IP becomes the primary <code>CIDR</code> while all decomposed blocks (<code>AllCIDRs</code>) are cached so subsequent IPs falling anywhere in the range skip redundant WHOIS queries.',
       'quickstart.reqDesc':
         'Ensure your environment has <strong>Java (JDK 21–25 recommended)</strong> and the standard OS <strong><code>whois</code> command</strong> (pre-installed on macOS / Linux).',
       'quickstart.methodADesc':
@@ -566,7 +569,7 @@
     }
 
     const argString = args.length > 0 ? ' ' + args.join(' ') : '';
-    const fullCommand = prefixPipe + 'java -jar build/libs/ip2cidr-1.0.0.jar' + argString;
+    const fullCommand = prefixPipe + 'java -jar ip2cidr-1.0.0.jar' + argString;
 
     if (generatedCmdCode) {
       generatedCmdCode.textContent = fullCommand;
@@ -635,9 +638,9 @@
     } else {
       if (outputPreviewLabel) {
         outputPreviewLabel.textContent =
-        outputMode === 'ip'
-          ? UI_STRINGS[currentLang].previewStdoutIp
-          : UI_STRINGS[currentLang].previewStdoutCidr;
+          outputMode === 'ip'
+            ? UI_STRINGS[currentLang].previewStdoutIp
+            : UI_STRINGS[currentLang].previewStdoutCidr;
       }
       const rawBlock1 = includeRaw
         ? '\nRaw Whois Output:\ninetnum:        1.1.1.0 - 1.1.1.255\nnetname:        APNIC-LABS\ncountry:        AU'
