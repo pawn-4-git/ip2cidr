@@ -26,8 +26,6 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '9.1.0'
 
       - name: Extract version from tag
         id: vars
@@ -39,7 +37,7 @@ jobs:
           echo "Building version: ${VERSION} (from tag: ${TAG_NAME})"
 
       - name: Build JAR with tag version
-        run: gradle build -PreleaseVersion="${{ steps.vars.outputs.version }}"
+        run: ./gradlew build -PreleaseVersion="${{ steps.vars.outputs.version }}"
 
       - name: Publish GitHub Release with JAR
         uses: softprops/action-gh-release@v2

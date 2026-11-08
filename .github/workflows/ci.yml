@@ -25,11 +25,9 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '9.1.0'
 
       - name: Run tests with JaCoCo coverage
-        run: gradle test jacocoTestReport
+        run: ./gradlew test jacocoTestReport
 
       - name: Upload JaCoCo coverage report
         if: always()
