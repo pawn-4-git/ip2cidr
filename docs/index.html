@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <script async src="https://www.googletagmanager.com/gtm.js?id=GTM-5SR7W5N7"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- MANDATORY: Declare support for both light and dark themes -->
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#1d4ed8" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0b1120" media="(prefers-color-scheme: dark)">
+
+  <!-- Primary Meta Tags -->
+  <title>ip2cidr ドキュメント &amp; 使い方ガイド | IP to CIDR WHOIS Resolver</title>
+  <meta name="title" content="ip2cidr ドキュメント &amp; 使い方ガイド | IP to CIDR WHOIS Resolver">
+  <meta name="description"
+    content="ip2cidr の使い方ガイド。複数のIPv4/IPv6アドレスからwhois検索でCIDR・国コード・登録組織・連絡先を抽出し、CIDR単位またはIP単位で集約・CSV出力するJavaライブラリおよびCLIツール。">
+  <meta name="keywords"
+    content="ip2cidr, WHOIS, CIDR, IPアドレス, IPv4, IPv6, RIR, APNIC, ARIN, RIPE, LACNIC, AFRINIC, JPNIC, Java, CLI, CSV">
+  <meta name="author" content="pawn-4-git">
+  <meta name="application-name" content="ip2cidr">
+  <meta name="robots" content="index, follow">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="canonical" href="https://pawn-4-git.github.io/ip2cidr/">
+
+  <!-- Favicon & App Icons -->
+  <link rel="icon" type="image/png" sizes="1545x2000" href="ip2cidr.png">
+  <link rel="shortcut icon" type="image/png" href="ip2cidr.png">
+  <link rel="apple-touch-icon" href="ip2cidr.png">
+  <link rel="manifest" href="site.webmanifest">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ip2cidr Documentation">
+  <meta property="og:locale" content="ja_JP">
+  <meta property="og:url" content="https://pawn-4-git.github.io/ip2cidr/">
+  <meta property="og:title" content="ip2cidr ドキュメント &amp; 使い方ガイド | IP to CIDR WHOIS Resolver">
+  <meta property="og:description"
+    content="複数のIPv4/IPv6アドレスからwhois検索でCIDR・国コード・登録組織・連絡先を抽出し、CIDR単位またはIP単位で集約・CSV出力するJavaライブラリおよびCLIツール。">
+  <meta property="og:image" content="https://pawn-4-git.github.io/ip2cidr/ip2cidr.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1545">
+  <meta property="og:image:height" content="2000">
+  <meta property="og:image:alt" content="ip2cidr アイコン">
+
+  <!-- X (Twitter) Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:url" content="https://pawn-4-git.github.io/ip2cidr/">
+  <meta name="twitter:title" content="ip2cidr ドキュメント &amp; 使い方ガイド | IP to CIDR WHOIS Resolver">
+  <meta name="twitter:description"
+    content="複数のIPv4/IPv6アドレスからwhois検索でCIDR・国コード・登録組織・連絡先を抽出し、CIDR単位またはIP単位で集約・CSV出力するJavaライブラリおよびCLIツール。">
+  <meta name="twitter:image" content="https://pawn-4-git.github.io/ip2cidr/ip2cidr.png">
+  <meta name="twitter:image:alt" content="ip2cidr アイコン">
+
+  <!-- Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "ip2cidr",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "macOS, Linux, Windows",
+    "programmingLanguage": "Java",
+    "softwareVersion": "1.0.0",
+    "description": "複数のIPv4/IPv6アドレスを入力として受け取り、OSのwhoisコマンドを実行してCIDR・登録組織・国コード・連絡先情報などを抽出し、CIDR単位またはIP単位で集約・CSV出力するJavaライブラリおよびCLIツール。",
+    "url": "https://pawn-4-git.github.io/ip2cidr/",
+    "codeRepository": "https://github.com/pawn-4-git/ip2cidr",
+    "image": "https://pawn-4-git.github.io/ip2cidr/ip2cidr.png"
+  }
+  </script>
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <a href="#content" class="skip-link visually-hidden">メインコンテンツへスキップ</a>
+  <div id="live-announcer" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="#" class="brand-link">
+        <img src="ip2cidr.png" alt="" class="brand-icon" width="28" height="36">
+        <span>ip2cidr</span>
+        <span class="brand-badge">v1.0.0</span>
+      </a>
+      <div class="nav-controls">
+        <nav aria-label="メイン">
+          <ul class="nav-list">
+            <li><a href="#features">特徴</a></li>
+            <li><a href="#quickstart">クイックスタート</a></li>
+            <li><a href="#cli-builder">コマンド生成</a></li>
+            <li><a href="#cli-usage">CLIの使い方</a></li>
+            <li><a href="#csv-spec">CSV出力仕様</a></li>
+            <li><a href="#library-api">Java API</a></li>
+          </ul>
+        </nav>
+        <button type="button" id="theme-toggle" class="theme-toggle-btn">
+          <span id="theme-toggle-label">テーマ: 自動</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="content" tabindex="-1">
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="container">
+        <div class="hero-top">
+          <div class="hero-copy">
+            <div class="hero-eyebrow">Java Library &amp; CLI Tool (IPv4 / IPv6 WHOIS Resolver)</div>
+            <h1>複数のIPアドレスをWHOIS検索し、CIDR単位で高速・安全に集約</h1>
+            <p class="hero-lead">
+              <code>ip2cidr</code> は、大量のIPv4 / IPv6アドレスを入力として受け取り、OSの <code>whois</code>
+              コマンドからCIDRブロック・国コード・登録組織・管理者/技術/Abuse連絡先を自動抽出して整理するJavaライブラリおよびCLIツールです。
+            </p>
+            <div class="hero-actions">
+              <a href="#quickstart" class="btn btn-primary">クイックスタートを見る</a>
+              <a href="#cli-builder" class="btn btn-secondary">対話型コマンドビルダーを試す</a>
+              <a href="https://github.com/pawn-4-git/ip2cidr" class="btn btn-secondary" target="_blank"
+                rel="noopener noreferrer">GitHub リポジトリ</a>
+            </div>
+          </div>
+          <div class="hero-visual">
+            <img src="ip2cidr.png" alt="ip2cidr アイコン" class="hero-icon" width="140" height="181" fetchpriority="high">
+          </div>
+        </div>
+        <ul class="hero-highlights" role="list">
+          <li>同一CIDRへの自動名寄せ・集約</li>
+          <li>IP昇順ソート＆直前CIDR判定でWHOISを節約</li>
+          <li>5秒間隔 / ヒット時0.5秒 / 制限時60秒×10回リトライ</li>
+          <li>ARIN / APNIC / RIPE / LACNIC / AFRINIC / JPNIC 対応</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Features & Pipeline Section -->
+    <section id="features" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2>主な特徴と解決アルゴリズム</h2>
+          <p>WHOISサーバーへの負荷とレートリミットを抑えながら、複数のIPアドレスを最小限のクエリ数で正確にCIDRへマッピングします。</p>
+        </div>
+
+        <ul class="feature-grid" role="list">
+          <li class="feature-card">
+            <div class="feature-icon" aria-hidden="true">01</div>
+            <h3>同一CIDRの自動集約</h3>
+            <p>複数の入力IPアドレスが同じCIDRブロックに属する場合、1つの <code>WhoisCidrInfo</code>
+              インスタンスに統合し、該当した入力IP一覧（<code>Matched IPs</code>）を保持します。</p>
+          </li>
+          <li class="feature-card">
+            <div class="feature-icon" aria-hidden="true">02</div>
+            <h3>昇順ソート＋直前CIDR即時判定</h3>
+            <p>入力されたIP群を最初に数値昇順でソートします。直前に解決したCIDR範囲に次のIPが含まれるかを即座にチェックし、<code>whois</code> 実行をスキップしてキャッシュを再利用します。</p>
+          </li>
+          <li class="feature-card">
+            <div class="feature-icon" aria-hidden="true">03</div>
+            <h3>堅牢なレートリミット制御</h3>
+            <p>
+              新規検索時はデフォルト<strong>5秒間隔</strong>、キャッシュヒット時も<strong>0.5秒待機</strong>してバーストを防止。万一レートリミット応答を受けた場合は<strong>60秒待機×最大10回</strong>まで自動リトライします。
+            </p>
+          </li>
+          <li class="feature-card">
+            <div class="feature-icon" aria-hidden="true">04</div>
+            <h3>世界中のRIR・JPNICフォーマット対応</h3>
+            <p>ARIN / APNIC / RIPE / LACNIC / AFRINIC / JPNIC に対応。明示的な <code>CIDR:</code> 行がない場合でも <code>inetnum</code>
+              や <code>NetRange</code> のIP範囲からCIDRを自動算出します。</p>
+          </li>
+        </ul>
+
+        <ol class="pipeline-steps" role="list">
+          <li class="pipeline-step">
+            <span class="step-number">STEP 1</span>
+            <h3>IPアドレスの数値昇順ソート</h3>
+            <p>IPv4 / IPv6アドレスを解析し、近接するIPアドレスが連続して処理されるように数値昇順で並び替えます。</p>
+          </li>
+          <li class="pipeline-step">
+            <span class="step-number">STEP 2</span>
+            <h3>直前CIDR・キャッシュ照合</h3>
+            <p>直前に解決したCIDRブロック（および既知キャッシュ）に包含されるか判定。ヒット時は0.5秒待機のみでWHOISをスキップします。</p>
+          </li>
+          <li class="pipeline-step">
+            <span class="step-number">STEP 3</span>
+            <h3>WHOIS実行＆自動リトライ</h3>
+            <p>未解決IPのみ5秒間隔で <code>whois</code> を実行。制限検知時は60秒待機して最大10回リトライします。</p>
+          </li>
+          <li class="pipeline-step">
+            <span class="step-number">STEP 4</span>
+            <h3>出力整形（CIDR単位 / IP単位）</h3>
+            <p>標準出力またはUTF-8 CSVファイル（数式インジェクション対策済み）へCIDR単位またはIP単位で出力します。</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- Quick Start Section -->
+    <section id="quickstart" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2>クイックスタート（要件・インストール・ビルド）</h2>
+          <p>GitHub Releases からビルド済みJARをダウンロードするか、ソースコードから Gradle でビルドしてすぐに利用を開始できます。</p>
+        </div>
+
+        <div class="callout">
+          <span class="callout-title">動作要件</span>
+          <p>実行環境に <strong>Java（JDK 21〜25推奨）</strong> および OS標準の <strong><code>whois</code> コマンド</strong>（macOS / Linux
+            標準搭載）がインストールされていることを確認してください。</p>
+        </div>
+
+        <h3>方法A: GitHub Releases からJARを取得して実行</h3>
+        <p><a href="https://github.com/pawn-4-git/ip2cidr/releases" target="_blank" rel="noopener noreferrer">GitHub
+            Releases ページ</a>から最新版の <code>ip2cidr-&lt;version&gt;.jar</code> をダウンロードし、そのまま <code>java -jar</code>
+          で実行できます。</p>
+
+        <div class="code-card">
+          <div class="code-card-header">
+            <span>Terminal (Quick Run)</span>
+            <button type="button" class="copy-btn" data-copy-target="code-quick-run"
+              aria-label="クイック実行コマンドをコピー">コピー</button>
+          </div>
+          <pre tabindex="0"><code id="code-quick-run">java -jar ip2cidr-1.0.0.jar 8.8.8.8 8.8.8.4 1.1.1.1</code></pre>
+        </div>
+
+        <h3>方法B: ソースコードからビルド・テスト実行</h3>
+        <p>リポジトリをクローンして <code>gradle build</code> を実行すると、<code>build/libs/ip2cidr-1.0.0.jar</code>
+          が生成されます。任意のバージョン番号を付与する場合は <code>-PreleaseVersion=x.y.z</code> を指定できます。</p>
+
+        <div class="code-card">
+          <div class="code-card-header">
+            <span>Terminal (Gradle Build &amp; Test)</span>
+            <button type="button" class="copy-btn" data-copy-target="code-gradle-build"
+              aria-label="Gradleビルドコマンドをコピー">コピー</button>
+          </div>
+          <pre tabindex="0"><code id="code-gradle-build">git clone https://github.com/pawn-4-git/ip2cidr.git
+cd ip2cidr
+
+# ビルド（build/libs/ip2cidr-1.0.0.jar を生成）
+gradle build
+
+# テストとJaCoCoカバレッジレポート生成
+gradle test</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive CLI Builder Section -->
+    <section id="cli-builder" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2>対話型 CLI コマンドビルダー &amp; 出力シミュレーター</h2>
+          <p>入力方法・出力単位（CIDR単位 / IP単位）・出力先（標準出力 / CSV）を選択すると、対応する実行コマンドと出力結果の例をリアルタイムに確認できます。</p>
+        </div>
+
+        <div class="builder-grid">
+          <form class="builder-form" id="cli-builder-form" onsubmit="return false;">
+            <div class="form-group">
+              <label for="builder-input-source">1. IPアドレスの入力方法</label>
+              <span id="hint-input-source" class="form-hint">デフォルト: コマンドライン引数（引数・ファイル未指定時は標準入力）</span>
+              <select id="builder-input-source" class="form-control" aria-describedby="hint-input-source">
+                <option value="args">コマンドライン引数で直接指定（デフォルト）</option>
+                <option value="file">ファイルから読み込む (-f ips.txt)</option>
+                <option value="stdin">標準入力（パイプ）から渡す (cat ips.txt | ...)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="builder-output-mode">2. 出力単位モード (-m / --mode)</label>
+              <span id="hint-output-mode" class="form-hint">デフォルト: cidr（CIDRブロック単位で集約）</span>
+              <select id="builder-output-mode" class="form-control" aria-describedby="hint-output-mode">
+                <option value="cidr">CIDR単位で集約して出力（デフォルト: cidr）</option>
+                <option value="ip">IPアドレス単位で展開して出力 (-m ip)</option>
+                <option value="cidr-explicit">CIDR単位を明示指定 (--cidr)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="builder-output-dest">3. 出力先フォーマット</label>
+              <span id="hint-output-dest" class="form-hint">デフォルト: 標準出力（--csv 未指定時）</span>
+              <select id="builder-output-dest" class="form-control" aria-describedby="hint-output-dest">
+                <option value="stdout">標準出力へテキスト表示（デフォルト）</option>
+                <option value="csv">CSVファイルへ書き出し (--csv)</option>
+              </select>
+            </div>
+
+            <div class="checkbox-row">
+              <input type="checkbox" id="builder-include-raw">
+              <label for="builder-include-raw">生のWHOIS出力全文を含める (<code>--raw</code> / デフォルト: OFF)</label>
+            </div>
+          </form>
+
+          <div class="builder-output">
+            <div class="code-card">
+              <div class="code-card-header">
+                <span>生成されたコマンド</span>
+                <button type="button" class="copy-btn" data-copy-target="builder-generated-cmd"
+                  aria-label="生成されたCLIコマンドをコピー">コピー</button>
+              </div>
+              <pre
+                tabindex="0"><code id="builder-generated-cmd">java -jar build/libs/ip2cidr-1.0.0.jar 8.8.8.8 8.8.8.4 1.1.1.1</code></pre>
+            </div>
+
+            <div class="code-card">
+              <div class="code-card-header">
+                <span id="builder-preview-label">標準出力プレビュー（CIDR単位モード）</span>
+                <button type="button" class="copy-btn" data-copy-target="builder-generated-output"
+                  aria-label="出力プレビューをコピー">コピー</button>
+              </div>
+              <pre tabindex="0"><code id="builder-generated-output"></code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CLI Usage & Options Section -->
+    <section id="cli-usage" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2>CLIとしての使い方・オプション一覧</h2>
+          <p>コマンドライン引数・テキストファイル・標準入力の3通りの入力方式に対応し、用途に応じてテキスト出力とCSV出力を切り替えられます。</p>
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <caption>CLI オプション・引数のリファレンスとデフォルト値</caption>
+            <thead>
+              <tr>
+                <th scope="col">パラメータ / オプション</th>
+                <th scope="col">短縮・別名</th>
+                <th scope="col">引数</th>
+                <th scope="col">デフォルト値（未指定時）</th>
+                <th scope="col">説明</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>&lt;ip1&gt; &lt;ip2&gt; ...</code></td>
+                <td>位置引数</td>
+                <td>IPアドレス（複数可）</td>
+                <td><strong>標準入力 (<code>stdin</code>) から読み取り</strong><br><small>（※<code>--file</code> も未指定の場合）</small>
+                </td>
+                <td>解決対象のIPv4 / IPv6アドレスを直接指定します。位置引数と <code>--file</code> の両方が省略された場合、自動的に標準入力から1行1IPで読み取ります。</td>
+              </tr>
+              <tr>
+                <td><code>--file</code></td>
+                <td><code>-f</code></td>
+                <td><code>&lt;path&gt;</code></td>
+                <td><strong>なし</strong><br><small>（位置引数または標準入力を使用）</small></td>
+                <td>指定したテキストファイル（UTF-8）から1行1IP形式でIPアドレスを読み込みます。空行や <code>#</code>
+                  で始まるコメント行は無視されます。位置引数と併用した場合は両方のIPが対象になります。</td>
+              </tr>
+              <tr>
+                <td><code>--csv</code></td>
+                <td><code>-c</code>, <code>-o</code>, <code>--output</code>, <code>csv</code></td>
+                <td><code>&lt;path&gt;</code></td>
+                <td><strong>なし（標準出力 <code>stdout</code> へテキスト出力）</strong></td>
+                <td>解決結果をUTF-8のCSVファイルとして指定パスに書き出します（親ディレクトリが存在しない場合は自動作成されます）。未指定時は標準出力にテキスト形式で表示します。</td>
+              </tr>
+              <tr>
+                <td><code>--mode</code></td>
+                <td><code>-m</code></td>
+                <td><code>cidr | ip</code></td>
+                <td><strong><code>cidr</code>（CIDRブロック単位）</strong></td>
+                <td>出力単位を切り替えます。デフォルトは <code>cidr</code>（同一CIDRを1レコードに集約）で、<code>ip</code>
+                  を指定すると1レコード1入力IPアドレス単位で展開して出力します。</td>
+              </tr>
+              <tr>
+                <td><code>--cidr</code></td>
+                <td>—</td>
+                <td>なし</td>
+                <td><strong>有効（デフォルト: <code>cidr</code> モード）</strong></td>
+                <td><code>--mode cidr</code> のショートハンドです。オプション未指定時のデフォルト状態と同じくCIDR単位で出力します。</td>
+              </tr>
+              <tr>
+                <td><code>--ip</code></td>
+                <td>—</td>
+                <td>なし</td>
+                <td><strong>無効（デフォルトは <code>cidr</code> モード）</strong></td>
+                <td><code>--mode ip</code> のショートハンドです。指定すると出力単位をIPアドレス単位に切り替えます。</td>
+              </tr>
+              <tr>
+                <td><code>--raw</code></td>
+                <td>—</td>
+                <td>なし</td>
+                <td><strong><code>false</code>（生WHOIS出力を含めない）</strong></td>
+                <td>デフォルトでは抽出された構造化項目のみを出力します。<code>--raw</code> を指定すると、<code>whois</code>
+                  コマンドの生出力全文（<code>RawWhoisOutput</code>）を末尾に追加します。</td>
+              </tr>
+              <tr>
+                <td><code>--help</code></td>
+                <td><code>-h</code></td>
+                <td>なし</td>
+                <td><strong><code>false</code>（通常実行）</strong></td>
+                <td>ヘルプメッセージを表示して終了します（IPアドレスが引数・ファイル・標準入力のいずれからも渡されなかった場合もデフォルトでヘルプが表示されます）。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>よく使うCLI実行パターン</h3>
+        <div class="code-card">
+          <div class="code-card-header">
+            <span>Terminal (CLI Examples)</span>
+            <button type="button" class="copy-btn" data-copy-target="code-cli-examples"
+              aria-label="CLI実行パターン集をコピー">コピー</button>
+          </div>
+          <pre tabindex="0"><code id="code-cli-examples"># 1. 引数でIPアドレスを渡す場合（標準出力・CIDR単位）
+java -jar build/libs/ip2cidr-1.0.0.jar 8.8.8.8 8.8.8.4 1.1.1.1
+
+# 2. ファイルからIPアドレスリストを読み込む場合（#コメント行・空行は自動スキップ）
+java -jar build/libs/ip2cidr-1.0.0.jar -f ips.txt
+
+# 3. 標準入力（パイプ）からIPアドレスを渡す場合
+cat ips.txt | java -jar build/libs/ip2cidr-1.0.0.jar
+
+# 4. 出力単位をIP単位（1ブロック1IP）に切り替えて標準出力に表示する場合
+java -jar build/libs/ip2cidr-1.0.0.jar -f ips.txt -m ip
+
+# 5. CSVファイルへ出力する場合（CIDR単位：デフォルト）
+java -jar build/libs/ip2cidr-1.0.0.jar -f ips.txt --csv result_cidr.csv
+
+# 6. CSVファイルへ出力する場合（IP単位：1行1IP）
+java -jar build/libs/ip2cidr-1.0.0.jar -f ips.txt -m ip --csv result_ip.csv
+
+# 7. 生のwhois出力も含める場合
+java -jar build/libs/ip2cidr-1.0.0.jar --raw 8.8.8.8</code></pre>
+        </div>
+
+        <h3>入力ファイル（<code>ips.txt</code>）の記述例</h3>
+        <p>IPv4アドレスとIPv6アドレスを混在させて記述できます。先頭が <code>#</code> の行および空行は自動的にスキップされます。</p>
+        <div class="code-card">
+          <div class="code-card-header">
+            <span>ips.txt</span>
+            <button type="button" class="copy-btn" data-copy-target="code-ips-txt"
+              aria-label="ips.txtのサンプルをコピー">コピー</button>
+          </div>
+          <pre tabindex="0"><code id="code-ips-txt"># Google Public DNS (同一CIDRに集約されます)
+8.8.8.8
+8.8.8.4
+
+# Cloudflare DNS (IPv4 &amp; IPv6)
+1.1.1.1
+2606:4700:4700::1111</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- CSV Specification Section -->
+    <section id="csv-spec" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2>CSV出力フォーマット仕様</h2>
+          <p><code>--csv &lt;path&gt;</code> オプション（または <code>CsvFormatter</code> クラス）で出力されるCSVファイルのカラム構成とセキュリティ仕様です。</p>
+        </div>
+
+        <div class="split-grid">
+          <div class="panel-card">
+            <h3>CIDR単位モード（デフォルト: <code>-m cidr</code>）</h3>
+            <p>1行につき1つのCIDRブロックを出力します。同一CIDRに属する複数の入力IPは <code>MatchedIPs</code> カラムにセミコロン区切り（<code>; </code>）で格納されます。
+            </p>
+            <ol>
+              <li><code>CIDR</code> — 代表CIDR（例: <code>8.8.8.0/24</code>）</li>
+              <li><code>NetworkIP</code> — ネットワークアドレス（例: <code>8.8.8.0</code>）</li>
+              <li><code>PrefixLength</code> — プレフィックス長（例: <code>24</code>）</li>
+              <li><code>AllCIDRs</code> — 検出された全CIDR一覧（<code>; </code>区切り）</li>
+              <li><code>IPRange</code> — IP範囲表記（例: <code>8.8.8.0 - 8.8.8.255</code>）</li>
+              <li><code>MatchedIPs</code> — 該当した入力IP一覧（<code>; </code>区切り）</li>
+              <li><code>Country</code> — 国コード（例: <code>US</code>, <code>JP</code>）</li>
+              <li><code>Registrant</code> — 登録組織名・登録者名</li>
+              <li><code>NetName</code> — ネットワーク名</li>
+              <li><code>Descriptions</code> — 説明・備考情報（<code> | </code>区切り）</li>
+              <li><code>AdminContacts</code> — 管理者連絡先（<code>; </code>区切り）</li>
+              <li><code>TechContacts</code> — 技術連絡先（<code>; </code>区切り）</li>
+              <li><code>AbuseContacts</code> — Abuse連絡先（<code>; </code>区切り）</li>
+              <li><code>RawWhoisOutput</code> — 生のWHOIS出力（<code>--raw</code> 指定時のみ）</li>
+            </ol>
+          </div>
+
+          <div class="panel-card">
+            <h3>IP単位モード（<code>-m ip</code> / <code>--ip</code>）</h3>
+            <p>1行につき1つの入力IPアドレスを出力します。元のIPリストと1対1で突合したい場合や、Excel / Google Sheets のVLOOKUP等で利用する場合に便利です。</p>
+            <ol>
+              <li><code>IPAddress</code> — 入力されたIPアドレス（例: <code>8.8.8.4</code>）</li>
+              <li><code>CIDR</code> — 所属する代表CIDR（例: <code>8.8.8.0/24</code>）</li>
+              <li><code>NetworkIP</code> — ネットワークアドレス（例: <code>8.8.8.0</code>）</li>
+              <li><code>PrefixLength</code> — プレフィックス長（例: <code>24</code>）</li>
+              <li><code>AllCIDRs</code> — 検出された全CIDR一覧（<code>; </code>区切り）</li>
+              <li><code>IPRange</code> — IP範囲表記（例: <code>8.8.8.0 - 8.8.8.255</code>）</li>
+              <li><code>Country</code> — 国コード</li>
+              <li><code>Registrant</code> — 登録組織名・登録者名</li>
+              <li><code>NetName</code> — ネットワーク名</li>
+              <li><code>Descriptions</code> — 説明・備考情報（<code> | </code>区切り）</li>
+              <li><code>AdminContacts</code> — 管理者連絡先（<code>; </code>区切り）</li>
+              <li><code>TechContacts</code> — 技術連絡先（<code>; </code>区切り）</li>
+              <li><code>AbuseContacts</code> — Abuse連絡先（<code>; </code>区切り）</li>
+              <li><code>RawWhoisOutput</code> — 生のWHOIS出力（<code>--raw</code> 指定時のみ）</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="callout callout-success">
+          <span class="callout-title">CSVインジェクション（数式実行）防止機能</span>
+          <p>外部レジストリのWHOIS応答に由来するテキストが <code>=</code>, <code>+</code>, <code>-</code>, <code>@</code>
+            で始まる場合、ExcelやGoogleスプレッドシートで開いた際に数式として評価されるのを防ぐため、自動的に先頭へシングルクォート（<code>'</code>）を付与してダブルクォートでエスケープします。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Java Library API Section -->
+    <section id="library-api" class="section">
+      <div class="container">
+        <div class="section-header">
+          <h2>Javaライブラリとしての組み込み・APIガイド</h2>
+          <p><code>com.ip2cidr.IpToCidrResolver</code> をアプリケーションから直接呼び出して、型安全なモデルクラス（<code>WhoisCidrInfo</code>,
+            <code>Cidr</code>）として結果を取得できます。
+          </p>
+        </div>
+
+        <h3>1. 基本的な使い方（<code>IpToCidrResolver</code>）</h3>
+        <div class="code-card">
+          <div class="code-card-header">
+            <span>Example.java</span>
+            <button type="button" class="copy-btn" data-copy-target="code-java-basic"
+              aria-label="Java基本サンプルコードをコピー">コピー</button>
+          </div>
+          <pre tabindex="0"><code id="code-java-basic">import com.ip2cidr.IpToCidrResolver;
+import com.ip2cidr.model.WhoisCidrInfo;
+import java.util.List;
+
+public class Example {
+    public static void main(String[] args) {
+        IpToCidrResolver resolver = new IpToCidrResolver();
+
+        List&lt;WhoisCidrInfo&gt; results = resolver.resolve(
+                "8.8.8.8",
+                "8.8.8.4",   // 8.8.8.0/24 に含まれるため whois 検索をスキップして流用
+                "1.1.1.1"    // 5秒待機後に whois 検索を実行
+        );
+
+        for (WhoisCidrInfo info : results) {
+            System.out.println("CIDR       : " + info.getCidr());                   // 例: 8.8.8.0/24
+            System.out.println("Network IP : " + info.getCidr().getIpAddress());    // 例: 8.8.8.0
+            System.out.println("PrefixLen  : " + info.getCidr().getPrefixLength()); // 例: 24
+            System.out.println("IP Range   : " + info.getIpRange());                // 例: 8.8.8.0 - 8.8.8.255
+            System.out.println("Matched IPs: " + info.getMatchedIpAddresses());     // 例: [8.8.8.4, 8.8.8.8]
+            System.out.println("Country    : " + info.getCountry());                // 例: US
+            System.out.println("Registrant : " + info.getRegistrant());             // 例: Google LLC
+            System.out.println("NetName    : " + info.getNetName());                // 例: GOGL
+            System.out.println("Admin      : " + info.getAdminContacts());
+            System.out.println("Tech       : " + info.getTechContacts());
+            System.out.println("Abuse      : " + info.getAbuseContacts());
+        }
+    }
+}</code></pre>
+        </div>
+
+        <h3>2. レートリミット設定のカスタマイズとCSV出力ユーティリティ</h3>
+        <p>引数なしコンストラクタ <code>new IpToCidrResolver()</code> では以下のデフォルト値が自動的に適用されます。用途に応じてコンストラクタ引数で個別にカスタマイズ可能です。</p>
+
+        <div class="table-wrapper">
+          <table>
+            <caption>Java API 設定パラメータとデフォルト値一覧</caption>
+            <thead>
+              <tr>
+                <th scope="col">対象クラス</th>
+                <th scope="col">パラメータ名</th>
+                <th scope="col">型</th>
+                <th scope="col">デフォルト値（定数）</th>
+                <th scope="col">説明</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>IpToCidrResolver</code></td>
+                <td><code>rateLimitInterval</code></td>
+                <td><code>Duration</code></td>
+                <td><strong><code>5秒</code></strong><br><small>(<code>DEFAULT_RATE_LIMIT_INTERVAL</code>)</small></td>
+                <td>新規に <code>whois</code> コマンドを実行する際の標準待機間隔。2回目以降のWHOISクエリ実行前に待機します。</td>
+              </tr>
+              <tr>
+                <td><code>IpToCidrResolver</code></td>
+                <td><code>cacheHitInterval</code></td>
+                <td><code>Duration</code></td>
+                <td>
+                  <strong><code>0.5秒 (500ms)</code></strong><br><small>(<code>DEFAULT_CACHE_HIT_INTERVAL</code>)</small>
+                </td>
+                <td>入力IPが既に解決済みのCIDR範囲内に含まれており、<code>whois</code> 実行をスキップした際の待機時間。</td>
+              </tr>
+              <tr>
+                <td><code>IpToCidrResolver</code></td>
+                <td><code>rateLimitCooldown</code></td>
+                <td><code>Duration</code></td>
+                <td><strong><code>1分 (60秒)</code></strong><br><small>(<code>DEFAULT_RATE_LIMIT_COOLDOWN</code>)</small>
+                </td>
+                <td>WHOISサーバーからレートリミット応答や一時エラーを受けた際に、再試行するまで待機するクールダウン時間。</td>
+              </tr>
+              <tr>
+                <td><code>IpToCidrResolver</code></td>
+                <td><code>maxRateLimitRetries</code></td>
+                <td><code>int</code></td>
+                <td><strong><code>10回</code></strong><br><small>(<code>DEFAULT_MAX_RATE_LIMIT_RETRIES</code>)</small>
+                </td>
+                <td>レートリミットまたはコマンドエラー発生時の最大自動リトライ回数。</td>
+              </tr>
+              <tr>
+                <td><code>IpToCidrResolver</code></td>
+                <td><code>whoisExecutor</code></td>
+                <td><code>WhoisExecutor</code></td>
+                <td><strong><code>new CommandWhoisExecutor()</code></strong></td>
+                <td>WHOIS検索を実行する実装クラス。デフォルトではOSの <code>whois</code> コマンドをサブプロセス実行します。</td>
+              </tr>
+              <tr>
+                <td><code>IpToCidrResolver</code></td>
+                <td><code>whoisParser</code></td>
+                <td><code>WhoisParser</code></td>
+                <td><strong><code>new WhoisParser()</code></strong></td>
+                <td>WHOIS応答テキストからCIDRや組織情報を抽出するパーサー実装。</td>
+              </tr>
+              <tr>
+                <td><code>IpToCidrResolver</code></td>
+                <td><code>sleeper</code></td>
+                <td><code>Sleeper</code></td>
+                <td><strong><code>Thread.sleep(...)</code></strong></td>
+                <td>待機処理を行う関数型インターフェース。テスト時にモックへ差し替えることで待機時間をゼロにできます。</td>
+              </tr>
+              <tr>
+                <td><code>CommandWhoisExecutor</code></td>
+                <td><code>whoisCommand</code></td>
+                <td><code>String</code></td>
+                <td><strong><code>"whois"</code></strong><br><small>(<code>DEFAULT_COMMAND</code>)</small></td>
+                <td>プロセス実行するOSのWHOISコマンド名（または実行ファイルパス）。</td>
+              </tr>
+              <tr>
+                <td><code>CommandWhoisExecutor</code></td>
+                <td><code>timeout</code></td>
+                <td><code>Duration</code></td>
+                <td><strong><code>30秒</code></strong><br><small>(<code>DEFAULT_TIMEOUT</code>)</small></td>
+                <td>1回の <code>whois</code> コマンド実行あたりの最大タイムアウト時間。超過時はプロセスを強制終了します。</td>
+              </tr>
+              <tr>
+                <td><code>CsvFormatter</code></td>
+                <td><code>mode</code></td>
+                <td><code>OutputMode</code></td>
+                <td><strong><code>OutputMode.CIDR</code></strong></td>
+                <td>CSVの出力単位（<code>OutputMode.fromString(null)</code> または空文字の場合もデフォルトで <code>CIDR</code> が選択されます）。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="code-card">
+          <div class="code-card-header">
+            <span>CustomResolverExample.java</span>
+            <button type="button" class="copy-btn" data-copy-target="code-java-custom"
+              aria-label="Javaカスタム設定サンプルコードをコピー">コピー</button>
+          </div>
+          <pre tabindex="0"><code id="code-java-custom">import com.ip2cidr.IpToCidrResolver;
+import com.ip2cidr.model.WhoisCidrInfo;
+import com.ip2cidr.util.CsvFormatter;
+import com.ip2cidr.util.CsvFormatter.OutputMode;
+import com.ip2cidr.whois.CommandWhoisExecutor;
+import com.ip2cidr.whois.WhoisParser;
+
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.List;
+
+public class CustomResolverExample {
+    public static void main(String[] args) throws Exception {
+        IpToCidrResolver resolver = new IpToCidrResolver(
+                new CommandWhoisExecutor(Duration.ofSeconds(30)), // コマンドタイムアウト: 30秒
+                new WhoisParser(),
+                Duration.ofSeconds(5),    // 通常whois検索間隔: 5秒
+                Duration.ofMillis(500),   // キャッシュヒット時待機: 0.5秒
+                Duration.ofMinutes(1),    // レートリミット検知時待機: 1分
+                10,                       // 最大リトライ回数: 10回
+                duration -&gt; Thread.sleep(duration.toMillis())
+        );
+
+        List&lt;WhoisCidrInfo&gt; results = resolver.resolve(List.of("1.1.1.1", "8.8.8.8"));
+
+        // CIDR単位のCSV文字列を取得
+        String csvText = CsvFormatter.format(results, OutputMode.CIDR, false);
+
+        // IP単位でCSVファイルに保存
+        CsvFormatter.writeToFile(Path.of("output_ip.csv"), results, OutputMode.IP, false);
+    }
+}</code></pre>
+        </div>
+
+        <h3>3. <code>WhoisCidrInfo</code> メソッド一覧</h3>
+        <div class="table-wrapper">
+          <table>
+            <caption>WhoisCidrInfo 主なゲッターメソッド</caption>
+            <thead>
+              <tr>
+                <th scope="col">メソッド</th>
+                <th scope="col">戻り値の型</th>
+                <th scope="col">説明</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>getCidr()</code></td>
+                <td><code>Cidr</code></td>
+                <td>代表となるCIDRオブジェクト（<code>getIpAddress()</code> と <code>getPrefixLength()</code> を保持）を返します。</td>
+              </tr>
+              <tr>
+                <td><code>getAllCidrs()</code></td>
+                <td><code>List&lt;Cidr&gt;</code></td>
+                <td>検出されたすべてのCIDR一覧（IP範囲が複数CIDRに分割された場合を含む）を返します。</td>
+              </tr>
+              <tr>
+                <td><code>getIpRange()</code></td>
+                <td><code>String</code></td>
+                <td>IPアドレス範囲表記（例: <code>"8.8.8.0 - 8.8.8.255"</code>）を返します。</td>
+              </tr>
+              <tr>
+                <td><code>getMatchedIpAddresses()</code></td>
+                <td><code>List&lt;String&gt;</code></td>
+                <td>このCIDR領域に分類された入力IPアドレスの一覧（重複なし）を返します。</td>
+              </tr>
+              <tr>
+                <td><code>getCountry()</code></td>
+                <td><code>String</code></td>
+                <td>2文字の国コード（例: <code>"JP"</code>, <code>"US"</code>）を返します。</td>
+              </tr>
+              <tr>
+                <td><code>getRegistrant()</code></td>
+                <td><code>String</code></td>
+                <td>登録組織名・登録者名（<code>org-name</code> / <code>Organization</code> / <code>組織名</code> 等）を返します。</td>
+              </tr>
+              <tr>
+                <td><code>getNetName()</code></td>
+                <td><code>String</code></td>
+                <td>ネットワーク名（<code>netname</code> / <code>NetName</code> / <code>ネットワーク名</code>）を返します。</td>
+              </tr>
+              <tr>
+                <td><code>getDescriptions()</code></td>
+                <td><code>List&lt;String&gt;</code></td>
+                <td>説明・備考情報（<code>descr</code> / <code>Comment</code> 等）のリストを返します。</td>
+              </tr>
+              <tr>
+                <td><code>getAdminContacts()</code> / <code>getTechContacts()</code> / <code>getAbuseContacts()</code>
+                </td>
+                <td><code>List&lt;String&gt;</code></td>
+                <td>管理者連絡先・技術連絡先・アビューズ連絡先の一覧をそれぞれ返します。</td>
+              </tr>
+              <tr>
+                <td><code>getRawWhoisOutput()</code></td>
+                <td><code>String</code></td>
+                <td><code>whois</code> コマンドの生出力テキスト全文を返します。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <img src="ip2cidr.png" alt="" class="footer-icon" width="22" height="28" loading="lazy">
+        <span><strong>ip2cidr</strong> — IPv4 / IPv6 WHOIS to CIDR Resolver &amp; Aggregator</span>
+      </div>
+      <ul class="footer-links" role="list">
+        <li><a href="https://github.com/pawn-4-git/ip2cidr" target="_blank" rel="noopener noreferrer">GitHub
+            Repository</a></li>
+        <li><a href="https://github.com/pawn-4-git/ip2cidr/releases" target="_blank"
+            rel="noopener noreferrer">Releases</a></li>
+        <li><a href="#content">ページ先頭へ戻る</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <script src="app.js" defer></script>
+</body>
+
+</html>

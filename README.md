@@ -100,3 +100,13 @@ java -jar build/libs/ip2cidr-1.0.0.jar -f ips.txt -m ip --csv result_ip.csv
 java -jar build/libs/ip2cidr-1.0.0.jar --raw 8.8.8.8
 ```
 
+## ドキュメント（GitHub Pages）
+
+ツールの使い方ガイド・対話型CLIコマンドビルダー・Java APIリファレンスをまとめたWebページが `docs/` ディレクトリに配置されています。
+
+- **ドキュメント本体**: `docs/index.html`（`docs/styles.css`, `docs/app.js`）
+- **GitHub Pages 公開方法**:
+  - **GitHub Actions で公開する場合**: リポジトリの `Settings > Pages > Build and deployment > Source` で **GitHub Actions** を選択すると、`.github/workflows/pages.yml` により `docs/` 配下が自動デプロイされます。
+  - **ブランチから公開する場合**: `Source` で **Deploy from a branch** を選択し、対象ブランチと `/docs` フォルダを指定してください。
+
+
