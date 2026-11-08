@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+set -e
+
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
+echo "Running tests and generating coverage report before push..."
+if [ -x "./gradlew" ]; then
+    ./gradlew test jacocoTestReport
+elif command -v gradle >/dev/null 2>&1; then
+    gradle test jacocoTestReport
+else
+    echo "Warning: gradle not found in PATH. Skipping pre-push tests." >&2
+    exit 0
+fi
+

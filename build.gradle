@@ -1,6 +1,7 @@
 plugins {
     id 'java-library'
     id 'application'
+    id 'jacoco'
 }
 
 group = 'com.ip2cidr'
@@ -45,6 +46,108 @@ tasks.named('test') {
     testLogging {
         events "passed", "skipped", "failed"
         exceptionFormat "full"
+    }
+    finalizedBy tasks.named('jacocoTestReport')
+}
+
+tasks.named('jacocoTestReport', JacocoReport) {
+    dependsOn tasks.named('test')
+    reports {
+        xml.required = true
+        csv.required = true
+        html.required = true
+    }
+    doLast {
+        def prePushHook = file('.git/hooks/pre-push')
+        if (prePushHook.exists() && !prePushHook.canExecute()) {
+            prePushHook.setExecutable(true)
+        }
+        def csvFile = reports.csv.outputLocation.asFile.get()
+        if (csvFile.exists()) {
+            def lines = csvFile.readLines()
+            if (lines.size() > 1) {
+                long instrMissed = 0L, instrCovered = 0L
+                long branchMissed = 0L, branchCovered = 0L
+                long lineMissed = 0L, lineCovered = 0L
+                long complexityMissed = 0L, complexityCovered = 0L
+                long methodMissed = 0L, methodCovered = 0L
+                long classMissed = 0L, classCovered = 0L
+
+                lines.drop(1).each { String line ->
+                    def cols = line.split(',')
+                    long iMissed = Long.parseLong(cols[3])
+                    long iCovered = Long.parseLong(cols[4])
+                    instrMissed += iMissed
+                    instrCovered += iCovered
+                    branchMissed += Long.parseLong(cols[5])
+                    branchCovered += Long.parseLong(cols[6])
+                    lineMissed += Long.parseLong(cols[7])
+                    lineCovered += Long.parseLong(cols[8])
+                    complexityMissed += Long.parseLong(cols[9])
+                    complexityCovered += Long.parseLong(cols[10])
+                    methodMissed += Long.parseLong(cols[11])
+                    methodCovered += Long.parseLong(cols[12])
+                    if (iCovered > 0L) {
+                        classCovered += 1L
+                    } else if (iMissed > 0L) {
+                        classMissed += 1L
+                    }
+                }
+
+                def formatPct = { Long covered, Long missed ->
+                    long total = covered + missed
+                    total == 0L ? "100.00% (0/0)" : String.format("%.2f%% (%d/%d)", (covered * 100.0d) / total, covered, total)
+                }
+
+                println "\n==================== Test Coverage Summary ===================="
+                println String.format("  Instructions : %s", formatPct(instrCovered, instrMissed))
+                println String.format("  Branches     : %s", formatPct(branchCovered, branchMissed))
+                println String.format("  Lines        : %s", formatPct(lineCovered, lineMissed))
+                println String.format("  Complexity   : %s", formatPct(complexityCovered, complexityMissed))
+                println String.format("  Methods      : %s", formatPct(methodCovered, methodMissed))
+                println String.format("  Classes      : %s", formatPct(classCovered, classMissed))
+                println "  HTML Report  : ${reports.html.outputLocation.asFile.get()}/index.html"
+                println "==============================================================="
+
+                def stepSummaryPath = System.getenv('GITHUB_STEP_SUMMARY')
+                if (stepSummaryPath) {
+                    def summaryFile = new File(stepSummaryPath)
+                    def sb = new StringBuilder()
+                    sb.append("## Test Coverage Summary (JaCoCo)\n\n")
+                    sb.append("| Metric | Coverage | Covered / Total |\n")
+                    sb.append("| :--- | ---: | ---: |\n")
+                    def appendRow = { String name, Long covered, Long missed ->
+                        long total = covered + missed
+                        String pctStr = total == 0L ? "100.00%" : String.format("%.2f%%", (covered * 100.0d) / total)
+                        sb.append(String.format("| **%s** | %s | %d / %d |\n", name, pctStr, covered, total))
+                    }
+                    appendRow("Instructions", instrCovered, instrMissed)
+                    appendRow("Branches", branchCovered, branchMissed)
+                    appendRow("Lines", lineCovered, lineMissed)
+                    appendRow("Complexity", complexityCovered, complexityMissed)
+                    appendRow("Methods", methodCovered, methodMissed)
+                    appendRow("Classes", classCovered, classMissed)
+                    sb.append("\n### Coverage by Class\n\n")
+                    sb.append("| Package | Class | Line Coverage | Branch Coverage | Instruction Coverage |\n")
+                    sb.append("| :--- | :--- | ---: | ---: | ---: |\n")
+                    lines.drop(1).each { String line ->
+                        def cols = line.split(',')
+                        String pkg = cols[1]
+                        String cls = cols[2]
+                        long iM = Long.parseLong(cols[3]), iC = Long.parseLong(cols[4])
+                        long bM = Long.parseLong(cols[5]), bC = Long.parseLong(cols[6])
+                        long lM = Long.parseLong(cols[7]), lC = Long.parseLong(cols[8])
+                        sb.append(String.format("| `%s` | `%s` | %s | %s | %s |\n",
+                                pkg, cls,
+                                formatPct(lC, lM),
+                                formatPct(bC, bM),
+                                formatPct(iC, iM)))
+                    }
+                    sb.append("\n")
+                    summaryFile.append(sb.toString(), 'UTF-8')
+                }
+            }
+        }
     }
 }
 

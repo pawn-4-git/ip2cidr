@@ -34,7 +34,8 @@ public class Main {
                 return;
             } else if ("--raw".equals(arg)) {
                 showRaw = true;
-            } else if ("-c".equals(arg) || "--csv".equals(arg) || "-o".equals(arg) || "--output".equals(arg)) {
+            } else if ("-c".equals(arg) || "--csv".equals(arg) || "csv".equals(arg) || "-o".equals(arg)
+                    || "--output".equals(arg)) {
                 if (i + 1 >= args.length || args[i + 1].startsWith("-")) {
                     System.err.println("Error: Missing CSV output file path after " + arg);
                     printUsage();
@@ -206,4 +207,3 @@ public class Main {
         System.out.println("  -h, --help            Show this help message");
     }
 }
-

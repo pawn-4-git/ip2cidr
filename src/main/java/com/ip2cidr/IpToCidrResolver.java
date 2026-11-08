@@ -45,9 +45,9 @@ public class IpToCidrResolver {
     public static final Duration DEFAULT_RATE_LIMIT_COOLDOWN = Duration.ofMinutes(1);
 
     /**
-     * レートリミット発生時のデフォルト最大リトライ回数（3回）。
+     * レートリミット発生時のデフォルト最大リトライ回数（10回）。
      */
-    public static final int DEFAULT_MAX_RATE_LIMIT_RETRIES = 3;
+    public static final int DEFAULT_MAX_RATE_LIMIT_RETRIES = 10;
 
     /**
      * レートリミット待機処理を抽象化する関数型インターフェース。
@@ -227,8 +227,13 @@ public class IpToCidrResolver {
 
         Map<Cidr, WhoisCidrInfo> batchResults = new LinkedHashMap<>();
         CachedEntry lastResolvedEntry = null;
+        int total = sortedInputs.size();
 
-        for (ParsedIpInput input : sortedInputs) {
+        logStatus("[WHOIS] Starting resolution for %d IP address(es) (sorted in ascending order)...", total);
+
+        for (int i = 0; i < total; i++) {
+            ParsedIpInput input = sortedInputs.get(i);
+            int current = i + 1;
             String ip = input.rawIp();
             InetAddress parsedIp = input.address();
 
@@ -241,17 +246,36 @@ public class IpToCidrResolver {
                 existingInfo.addMatchedIpAddress(ip);
                 batchResults.putIfAbsent(existingInfo.getCidr(), existingInfo);
                 lastResolvedEntry = matchedEntry;
+                logStatus(
+                        "[WHOIS] [%d/%d] %s -> Skipped (matched cached CIDR: %s, Country: %s, Registrant: %s)",
+                        current,
+                        total,
+                        ip,
+                        existingInfo.getCidr(),
+                        existingInfo.getCountry(),
+                        existingInfo.getRegistrant());
                 // 既に判定範囲内のIPアドレスだった場合も、次のwhoisの実行を空けるために0.5秒待機
                 sleepDuration(cacheHitInterval);
                 continue;
             }
 
             // 2. 未検出のIPアドレスの場合はレートリミット（通常5秒間隔、制限検知時は1分待機リトライ）を適用してwhoisを実行
-            String rawWhois = executeWhoisWithRetry(ip);
+            String rawWhois = executeWhoisWithRetry(ip, current, total);
 
             WhoisParser.ParsedResult parsedResult = whoisParser.parseWithBlocks(ip, rawWhois);
             WhoisCidrInfo newInfo = parsedResult.info();
             Cidr primaryCidr = newInfo.getCidr();
+
+            logStatus(
+                    "[WHOIS] [%d/%d] %s -> Resolved CIDR: %s (Range: %s, Country: %s, NetName: %s, Registrant: %s)",
+                    current,
+                    total,
+                    ip,
+                    primaryCidr,
+                    newInfo.getIpRange(),
+                    newInfo.getCountry(),
+                    newInfo.getNetName(),
+                    newInfo.getRegistrant());
 
             // 3. 同一CIDRが既に存在する場合は1つのWhoisCidrInfoクラスに統合
             CachedEntry existingByCidr = cidrCache.get(primaryCidr);
@@ -267,6 +291,11 @@ public class IpToCidrResolver {
                 lastResolvedEntry = newEntry;
             }
         }
+
+        logStatus(
+                "[WHOIS] Completed resolution: %d IP address(es) aggregated into %d CIDR block(s).",
+                total,
+                batchResults.size());
 
         return new ArrayList<>(batchResults.values());
     }
@@ -302,38 +331,50 @@ public class IpToCidrResolver {
         return bestEntry;
     }
 
-    private String executeWhoisWithRetry(String ip) {
-        waitForRateLimitIfNeeded();
+    private String executeWhoisWithRetry(String ip, int current, int total) {
+        waitForRateLimitIfNeeded(ip, current, total);
 
         int attempt = 0;
         while (true) {
             attempt++;
             hasExecutedWhois = true;
+            logStatus("[WHOIS] [%d/%d] Querying whois for %s...", current, total, ip);
             try {
                 String rawWhois = whoisExecutor.executeWhois(ip);
                 if (!whoisParser.isRateLimited(rawWhois) || attempt > maxRateLimitRetries) {
                     return rawWhois;
                 }
-                System.err.printf(
-                        "[WARN] Whois rate limit detected for IP %s. Waiting %d seconds before retry (%d/%d)...%n",
+                logStatus(
+                        "[WHOIS] [WARN] Rate limit detected for IP %s. Waiting %d seconds before retry (%d/%d)...",
                         ip, rateLimitCooldown.toSeconds(), attempt, maxRateLimitRetries);
             } catch (WhoisException e) {
                 if (attempt > maxRateLimitRetries) {
                     throw e;
                 }
-                System.err.printf(
-                        "[WARN] Whois query failed (%s) for IP %s. Waiting %d seconds before retry (%d/%d)...%n",
+                logStatus(
+                        "[WHOIS] [WARN] Query failed (%s) for IP %s. Waiting %d seconds before retry (%d/%d)...",
                         e.getMessage(), ip, rateLimitCooldown.toSeconds(), attempt, maxRateLimitRetries);
             }
             sleepDuration(rateLimitCooldown);
         }
     }
 
-    private void waitForRateLimitIfNeeded() {
+    private void waitForRateLimitIfNeeded(String ip, int current, int total) {
         if (!hasExecutedWhois || rateLimitInterval.isZero()) {
             return;
         }
+        logStatus(
+                "[WHOIS] [%d/%d] Waiting %d second(s) for rate limit before querying %s...",
+                current,
+                total,
+                rateLimitInterval.toSeconds(),
+                ip);
         sleepDuration(rateLimitInterval);
+    }
+
+    private void logStatus(String format, Object... args) {
+        System.out.println(String.format(format, args));
+        System.out.flush();
     }
 
     private void sleepDuration(Duration duration) {
