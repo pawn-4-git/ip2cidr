@@ -1,0 +1,20 @@
+{
+  "name": "ip2cidr ドキュメント & 使い方ガイド",
+  "short_name": "ip2cidr",
+  "description": "複数のIPv4/IPv6アドレスからwhois検索でCIDR・国コード・登録組織・連絡先を抽出し、CIDR単位またはIP単位で集約・CSV出力するJavaライブラリおよびCLIツール。",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1120",
+  "theme_color": "#1d4ed8",
+  "icons": [
+    {
+      "src": "ip2cidr.png",
+      "sizes": "1545x2000",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
+

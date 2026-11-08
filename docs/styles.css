@@ -1,0 +1,967 @@
+/* ==========================================================================
+   ip2cidr Documentation Stylesheet
+   Modern CSS with light-dark(), responsive clamp() typography, and a11y
+   ========================================================================== */
+
+:root {
+  /* Light mode raw tokens */
+  --bg-canvas-light: #f8fafc;
+  --bg-surface-light: #ffffff;
+  --bg-elevated-light: #f1f5f9;
+  --bg-accent-subtle-light: #eff6ff;
+  --bg-success-subtle-light: #ecfdf5;
+  --bg-warning-subtle-light: #fffbeb;
+
+  --text-primary-light: #0f172a;
+  --text-secondary-light: #334155;
+  --text-muted-light: #64748b;
+
+  --brand-primary-light: #1d4ed8;
+  --brand-primary-hover-light: #1e40af;
+  --brand-secondary-light: #0284c7;
+  --brand-on-primary-light: #ffffff;
+
+  --border-subtle-light: #e2e8f0;
+  --border-strong-light: #cbd5e1;
+
+  --status-success-light: #047857;
+  --status-warning-light: #b45309;
+  --focus-ring-light: #2563eb;
+
+  /* Dark mode raw tokens */
+  --bg-canvas-dark: #0b1120;
+  --bg-surface-dark: #111827;
+  --bg-elevated-dark: #1e293b;
+  --bg-accent-subtle-dark: #172554;
+  --bg-success-subtle-dark: #064e3b;
+  --bg-warning-subtle-dark: #451a03;
+
+  --text-primary-dark: #f8fafc;
+  --text-secondary-dark: #cbd5e1;
+  --text-muted-dark: #94a3b8;
+
+  --brand-primary-dark: #60a5fa;
+  --brand-primary-hover-dark: #93c5fd;
+  --brand-secondary-dark: #38bdf8;
+  --brand-on-primary-dark: #0f172a;
+
+  --border-subtle-dark: #1e293b;
+  --border-strong-dark: #334155;
+
+  --status-success-dark: #34d399;
+  --status-warning-dark: #fbbf24;
+  --focus-ring-dark: #60a5fa;
+
+  /* Default (Light) assignments for fallback browsers */
+  --bg-canvas: var(--bg-canvas-light);
+  --bg-surface: var(--bg-surface-light);
+  --bg-elevated: var(--bg-elevated-light);
+  --bg-accent-subtle: var(--bg-accent-subtle-light);
+  --bg-success-subtle: var(--bg-success-subtle-light);
+  --bg-warning-subtle: var(--bg-warning-subtle-light);
+
+  --text-primary: var(--text-primary-light);
+  --text-secondary: var(--text-secondary-light);
+  --text-muted: var(--text-muted-light);
+
+  --brand-primary: var(--brand-primary-light);
+  --brand-primary-hover: var(--brand-primary-hover-light);
+  --brand-secondary: var(--brand-secondary-light);
+  --brand-on-primary: var(--brand-on-primary-light);
+
+  --border-subtle: var(--border-subtle-light);
+  --border-strong: var(--border-strong-light);
+
+  --status-success: var(--status-success-light);
+  --status-warning: var(--status-warning-light);
+  --focus-ring: var(--focus-ring-light);
+  --accent-color: var(--brand-primary-light);
+
+  /* Fallback for browsers without light-dark() support */
+  @media (prefers-color-scheme: dark) {
+    --bg-canvas: var(--bg-canvas-dark);
+    --bg-surface: var(--bg-surface-dark);
+    --bg-elevated: var(--bg-elevated-dark);
+    --bg-accent-subtle: var(--bg-accent-subtle-dark);
+    --bg-success-subtle: var(--bg-success-subtle-dark);
+    --bg-warning-subtle: var(--bg-warning-subtle-dark);
+
+    --text-primary: var(--text-primary-dark);
+    --text-secondary: var(--text-secondary-dark);
+    --text-muted: var(--text-muted-dark);
+
+    --brand-primary: var(--brand-primary-dark);
+    --brand-primary-hover: var(--brand-primary-hover-dark);
+    --brand-secondary: var(--brand-secondary-dark);
+    --brand-on-primary: var(--brand-on-primary-dark);
+
+    --border-subtle: var(--border-subtle-dark);
+    --border-strong: var(--border-strong-dark);
+
+    --status-success: var(--status-success-dark);
+    --status-warning: var(--status-warning-dark);
+    --focus-ring: var(--focus-ring-dark);
+    --accent-color: var(--brand-primary-dark);
+  }
+
+  /* Modern light-dark() token bindings */
+  @supports (color: light-dark(white, black)) {
+    --bg-canvas: light-dark(var(--bg-canvas-light), var(--bg-canvas-dark));
+    --bg-surface: light-dark(var(--bg-surface-light), var(--bg-surface-dark));
+    --bg-elevated: light-dark(var(--bg-elevated-light), var(--bg-elevated-dark));
+    --bg-accent-subtle: light-dark(var(--bg-accent-subtle-light), var(--bg-accent-subtle-dark));
+    --bg-success-subtle: light-dark(var(--bg-success-subtle-light), var(--bg-success-subtle-dark));
+    --bg-warning-subtle: light-dark(var(--bg-warning-subtle-light), var(--bg-warning-subtle-dark));
+
+    --text-primary: light-dark(var(--text-primary-light), var(--text-primary-dark));
+    --text-secondary: light-dark(var(--text-secondary-light), var(--text-secondary-dark));
+    --text-muted: light-dark(var(--text-muted-light), var(--text-muted-dark));
+
+    --brand-primary: light-dark(var(--brand-primary-light), var(--brand-primary-dark));
+    --brand-primary-hover: light-dark(var(--brand-primary-hover-light), var(--brand-primary-hover-dark));
+    --brand-secondary: light-dark(var(--brand-secondary-light), var(--brand-secondary-dark));
+    --brand-on-primary: light-dark(var(--brand-on-primary-light), var(--brand-on-primary-dark));
+
+    --border-subtle: light-dark(var(--border-subtle-light), var(--border-subtle-dark));
+    --border-strong: light-dark(var(--border-strong-light), var(--border-strong-dark));
+
+    --status-success: light-dark(var(--status-success-light), var(--status-success-dark));
+    --status-warning: light-dark(var(--status-warning-light), var(--status-warning-dark));
+    --focus-ring: light-dark(var(--focus-ring-light), var(--focus-ring-dark));
+    --accent-color: light-dark(var(--brand-primary-light), var(--brand-primary-dark));
+  }
+
+  /* Layout & Typography Tokens */
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", "Noto Sans JP", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --max-width-container: 72rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
+
+  /* MANDATORY: Apply color-scheme to :root for viewport-wide theming */
+  color-scheme: light dark;
+  accent-color: var(--accent-color);
+  scroll-behavior: smooth;
+}
+
+/* Explicit theme override support via data-theme attribute */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg-canvas: var(--bg-canvas-light);
+  --bg-surface: var(--bg-surface-light);
+  --bg-elevated: var(--bg-elevated-light);
+  --bg-accent-subtle: var(--bg-accent-subtle-light);
+  --bg-success-subtle: var(--bg-success-subtle-light);
+  --bg-warning-subtle: var(--bg-warning-subtle-light);
+  --text-primary: var(--text-primary-light);
+  --text-secondary: var(--text-secondary-light);
+  --text-muted: var(--text-muted-light);
+  --brand-primary: var(--brand-primary-light);
+  --brand-primary-hover: var(--brand-primary-hover-light);
+  --brand-secondary: var(--brand-secondary-light);
+  --brand-on-primary: var(--brand-on-primary-light);
+  --border-subtle: var(--border-subtle-light);
+  --border-strong: var(--border-strong-light);
+  --status-success: var(--status-success-light);
+  --status-warning: var(--status-warning-light);
+  --focus-ring: var(--focus-ring-light);
+  --accent-color: var(--brand-primary-light);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-canvas: var(--bg-canvas-dark);
+  --bg-surface: var(--bg-surface-dark);
+  --bg-elevated: var(--bg-elevated-dark);
+  --bg-accent-subtle: var(--bg-accent-subtle-dark);
+  --bg-success-subtle: var(--bg-success-subtle-dark);
+  --bg-warning-subtle: var(--bg-warning-subtle-dark);
+  --text-primary: var(--text-primary-dark);
+  --text-secondary: var(--text-secondary-dark);
+  --text-muted: var(--text-muted-dark);
+  --brand-primary: var(--brand-primary-dark);
+  --brand-primary-hover: var(--brand-primary-hover-dark);
+  --brand-secondary: var(--brand-secondary-dark);
+  --brand-on-primary: var(--brand-on-primary-dark);
+  --border-subtle: var(--border-subtle-dark);
+  --border-strong: var(--border-strong-dark);
+  --status-success: var(--status-success-dark);
+  --status-warning: var(--status-warning-dark);
+  --focus-ring: var(--focus-ring-dark);
+  --accent-color: var(--brand-primary-dark);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--text-primary);
+  background-color: var(--bg-canvas);
+  text-align: start;
+  overflow-wrap: break-word;
+}
+
+/* Target specific heading elements for balanced wrapping */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-block-start: 0;
+  color: var(--text-primary);
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+/* Apply to multi-line text blocks to prevent orphaned words */
+p,
+blockquote,
+li {
+  text-wrap: pretty;
+}
+
+p {
+  max-width: 78ch;
+  margin-block: 0 1rem;
+  color: var(--text-secondary);
+}
+
+a {
+  color: var(--brand-primary);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+a:hover {
+  color: var(--brand-primary-hover);
+}
+
+/* High contrast focus indicator */
+:where(a:any-link, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* Visually hidden utility that reveals on focus for skip links */
+.visually-hidden:where(:not(:focus-within, :active)) {
+  position: absolute !important;
+  clip-path: inset(50%) !important;
+  overflow: hidden !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  white-space: nowrap !important;
+}
+
+.skip-link:focus-visible {
+  position: fixed;
+  inset-block-start: 1rem;
+  inset-inline-start: 1rem;
+  z-index: 1000;
+  padding: 0.625rem 1.25rem;
+  background-color: var(--brand-primary);
+  color: var(--brand-on-primary);
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+/* ==========================================================================
+   Header & Navigation
+   ========================================================================== */
+.site-header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 100;
+  background-color: var(--bg-surface);
+  border-block-end: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+
+.header-inner {
+  max-width: var(--max-width-container);
+  margin-inline: auto;
+  padding: 0.75rem 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: var(--text-primary);
+  text-decoration: none;
+  min-block-size: 2.25rem;
+}
+
+.brand-icon {
+  display: block;
+  width: 1.75rem;
+  height: auto;
+  aspect-ratio: 1545 / 2000;
+  object-fit: contain;
+}
+
+.brand-badge {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  background-color: var(--bg-accent-subtle);
+  color: var(--brand-primary);
+  border: 1px solid var(--border-strong);
+}
+
+.nav-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.nav-list a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2.25rem;
+  padding: 0.375rem 0.625rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.nav-list a:hover {
+  background-color: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.theme-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-block-size: 2.25rem;
+  min-inline-size: 2.25rem;
+  padding: 0.375rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.theme-toggle-btn:hover {
+  border-color: var(--brand-primary);
+}
+
+/* ==========================================================================
+   Main Container & Sections
+   ========================================================================== */
+.container {
+  max-width: var(--max-width-container);
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+
+.hero {
+  padding-block: clamp(2.5rem, 4vw + 1rem, 4.5rem);
+  border-block-end: 1px solid var(--border-subtle);
+  background: radial-gradient(circle at 85% 15%, var(--bg-accent-subtle), transparent 55%);
+}
+
+.hero-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.hero-copy {
+  flex: 1 1 34rem;
+  min-width: 0;
+}
+
+.hero-visual {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 1.375rem;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1.25rem;
+  box-shadow: var(--shadow-md);
+}
+
+.hero-icon {
+  display: block;
+  width: clamp(5.5rem, 4.5rem + 4vw, 8.75rem);
+  height: auto;
+  aspect-ratio: 1545 / 2000;
+  object-fit: contain;
+}
+
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--brand-primary);
+  margin-block-end: 0.75rem;
+}
+
+.hero h1 {
+  font-size: clamp(2rem, 1.35rem + 2.8vw, 3.25rem);
+  letter-spacing: -0.02em;
+  margin-block-end: 1rem;
+}
+
+.hero-lead {
+  font-size: clamp(1.0625rem, 0.98rem + 0.4vw, 1.25rem);
+  color: var(--text-secondary);
+  max-width: 68ch;
+  margin-block-end: 1.75rem;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-block-end: 2rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-block-size: 2.75rem;
+  padding: 0.625rem 1.25rem;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-primary {
+  background-color: var(--brand-primary);
+  color: var(--brand-on-primary);
+}
+
+.btn-primary:hover {
+  background-color: var(--brand-primary-hover);
+  color: var(--brand-on-primary);
+}
+
+.btn-secondary {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.btn-secondary:hover {
+  background-color: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.hero-highlights {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.75rem;
+}
+
+.hero-highlights li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.section {
+  padding-block: clamp(2.5rem, 3vw + 1rem, 4rem);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.section-header {
+  margin-block-end: 2rem;
+}
+
+.section-header h2 {
+  font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2.125rem);
+  margin-block-end: 0.5rem;
+}
+
+.section-header p {
+  margin-block-end: 0;
+}
+
+/* ==========================================================================
+   Feature Cards & Pipeline Grid
+   ========================================================================== */
+.feature-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 1.25rem;
+}
+
+.feature-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-md);
+  background-color: var(--bg-accent-subtle);
+  color: var(--brand-primary);
+  margin-block-end: 1rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.feature-card h3 {
+  font-size: 1.125rem;
+  margin-block-end: 0.5rem;
+}
+
+.feature-card p {
+  font-size: 0.9375rem;
+  margin-block-end: 0;
+}
+
+/* ==========================================================================
+   Workflow / Pipeline Steps
+   ========================================================================== */
+.pipeline-steps {
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+}
+
+.pipeline-step {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  position: relative;
+}
+
+.step-number {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-accent-subtle);
+  color: var(--brand-primary);
+  margin-block-end: 0.5rem;
+}
+
+.pipeline-step h3 {
+  font-size: 1rem;
+  margin-block-end: 0.375rem;
+}
+
+.pipeline-step p {
+  font-size: 0.875rem;
+  margin-block-end: 0;
+}
+
+/* ==========================================================================
+   Code Blocks & Copy Buttons
+   ========================================================================== */
+code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  padding: 0.125rem 0.375rem;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.code-card {
+  margin-block: 1rem 1.5rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background-color: #0f172a;
+}
+
+.code-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background-color: #1e293b;
+  border-block-end: 1px solid #334155;
+  color: #cbd5e1;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-block-size: 2rem;
+  min-inline-size: 2rem;
+  padding: 0.25rem 0.625rem;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #f8fafc;
+  background-color: #334155;
+  border: 1px solid #475569;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.copy-btn:hover {
+  background-color: #475569;
+}
+
+.copy-btn[data-copied="true"] {
+  background-color: #065f46;
+  border-color: #10b981;
+  color: #ecfdf5;
+}
+
+pre {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+  color-scheme: dark;
+  /* Mandatory: any inherited color properties must be set again, even if to the same design tokens */
+  accent-color: var(--accent-color);
+  background-color: #0f172a;
+  color: #f8fafc;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+pre code {
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+}
+
+/* ==========================================================================
+   Interactive CLI Command Builder
+   ========================================================================== */
+.builder-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+@media (min-width: 52rem) {
+  .builder-grid {
+    grid-template-columns: 22rem 1fr;
+  }
+}
+
+.builder-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.form-group label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.form-hint {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.form-control {
+  width: 100%;
+  min-block-size: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  background-color: var(--bg-canvas);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding-block: 0.25rem;
+}
+
+.checkbox-row input[type="checkbox"] {
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0;
+}
+
+.checkbox-row label {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.builder-output {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.builder-output .code-card {
+  margin-block: 0;
+}
+
+/* ==========================================================================
+   Tables
+   ========================================================================== */
+.table-wrapper {
+  overflow-x: auto;
+  margin-block: 1.25rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-surface);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+  text-align: start;
+}
+
+caption {
+  padding: 0.875rem 1rem;
+  font-weight: 700;
+  text-align: start;
+  color: var(--text-primary);
+  background-color: var(--bg-elevated);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+th,
+td {
+  padding: 0.75rem 1rem;
+  border-block-end: 1px solid var(--border-subtle);
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  color: var(--text-primary);
+  background-color: var(--bg-elevated);
+  text-wrap: balance;
+}
+
+td {
+  color: var(--text-secondary);
+}
+
+tr:last-child th,
+tr:last-child td {
+  border-block-end: none;
+}
+
+/* ==========================================================================
+   Callouts / Alerts
+   ========================================================================== */
+.callout {
+  padding: 1rem 1.25rem;
+  border-inline-start: 4px solid var(--brand-primary);
+  background-color: var(--bg-accent-subtle);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  margin-block: 1.25rem;
+}
+
+.callout-title {
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-block-end: 0.25rem;
+  display: block;
+}
+
+.callout p {
+  margin-block-end: 0;
+  font-size: 0.9375rem;
+}
+
+.callout-success {
+  border-inline-start-color: var(--status-success);
+  background-color: var(--bg-success-subtle);
+}
+
+.callout-warning {
+  border-inline-start-color: var(--status-warning);
+  background-color: var(--bg-warning-subtle);
+}
+
+/* ==========================================================================
+   Two-column Grid for Side-by-Side Comparison
+   ========================================================================== */
+.split-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: 1.5rem;
+}
+
+.panel-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+}
+
+.panel-card h3 {
+  font-size: 1.125rem;
+  margin-block-end: 0.75rem;
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+.site-footer {
+  padding-block: 2.5rem;
+  background-color: var(--bg-surface);
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.footer-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.footer-icon {
+  display: block;
+  width: 1.375rem;
+  height: auto;
+  aspect-ratio: 1545 / 2000;
+  object-fit: contain;
+}
+
+.footer-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+}
+
+@media (pointer: coarse) {
+  .copy-btn,
+  .theme-toggle-btn,
+  .nav-list a {
+    min-block-size: 2.75rem;
+    min-inline-size: 2.75rem;
+  }
+}
+
