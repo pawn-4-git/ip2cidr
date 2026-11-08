@@ -45,7 +45,7 @@ git push origin v1.1.0
 
 ### テストとカバレッジ計測
 
-テスト実行時には JaCoCo によるテストカバレッジが自動計測され、コンソールへのサマリ出力およびHTML/XML/CSVレポート生成が行われます。また、GitHub Actions（`.github/workflows/ci.yml`）および Git `pre-push` フック（`.githooks/pre-push`）により、PR作成時や `push` 時に自動でテストとカバレッジ計測が実行されます。
+テスト実行時には JaCoCo によるテストカバレッジが自動計測され、コンソールへのサマリ出力およびHTML/XML/CSVレポート生成が行われます。また、GitHub Actions（`.github/workflows/ci.yml`）により、PR作成時や `push` 時に自動でテストとカバレッジ計測が実行されます。
 
 ```bash
 gradle test
