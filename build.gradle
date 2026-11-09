@@ -46,6 +46,10 @@ dependencies {
     }
 }
 
+jacoco {
+    toolVersion = '0.8.14'
+}
+
 tasks.named('test') {
     useJUnitPlatform()
     testLogging {
@@ -63,10 +67,6 @@ tasks.named('jacocoTestReport', JacocoReport) {
         html.required = true
     }
     doLast {
-        def prePushHook = file('.git/hooks/pre-push')
-        if (prePushHook.exists() && !prePushHook.canExecute()) {
-            prePushHook.setExecutable(true)
-        }
         def csvFile = reports.csv.outputLocation.asFile.get()
         if (csvFile.exists()) {
             def lines = csvFile.readLines()

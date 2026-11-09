@@ -6,17 +6,22 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * IPv4 / IPv6 アドレスおよびCIDR・IP範囲変換のユーティリティクラス。
  */
 public final class CidrUtils {
 
+    private static final Pattern IP_LITERAL_PATTERN = Pattern.compile(
+            "^(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}"
+                    + "|[0-9a-fA-F:]*:[0-9a-fA-F:.]*)$");
+
     private CidrUtils() {
     }
 
     /**
-     * DNS逆引きを行わずにIPアドレスリテラルを解析します。
+     * DNS逆引きを行わずにIPアドレスリテラルを解析します（Java 21互換）。
      */
     public static InetAddress parseIpAddress(String ipText) {
         if (ipText == null || ipText.isBlank()) {
@@ -27,7 +32,14 @@ public final class CidrUtils {
         if (zoneIdx > 0) {
             cleaned = cleaned.substring(0, zoneIdx);
         }
-        return InetAddress.ofLiteral(cleaned);
+        if (!IP_LITERAL_PATTERN.matcher(cleaned).matches()) {
+            throw new IllegalArgumentException("Invalid IP address literal: " + ipText);
+        }
+        try {
+            return InetAddress.getByName(cleaned);
+        } catch (UnknownHostException e) {
+            throw new IllegalArgumentException("Invalid IP address literal: " + ipText, e);
+        }
     }
 
     /**
