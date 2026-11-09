@@ -9,9 +9,9 @@ group = 'com.ip2cidr'
 def rawVersion = findProperty('releaseVersion')?.toString() ?: System.getenv('RELEASE_VERSION') ?: '1.0.0'
 version = rawVersion.replaceFirst('^v(?=\\d)', '')
 
-// Java 25 をターゲットとして想定。
-// ビルド環境の JDK が 25 未満の場合は、利用可能な JDK の最新リリースバージョンでコンパイルします。
-def targetJavaVersion = Integer.parseInt(findProperty('javaVersion')?.toString() ?: '25')
+// Java 21 (LTS) をターゲットとしてコンパイル（生成されるJARは Java 21〜25 で動作可能）。
+// ビルド環境の JDK が 21 未満の場合は、利用可能な JDK の最新リリースバージョンでコンパイルします。
+def targetJavaVersion = Integer.parseInt(findProperty('javaVersion')?.toString() ?: '21')
 def currentJvmVersion = Integer.parseInt(JavaVersion.current().majorVersion)
 def effectiveRelease = Math.min(targetJavaVersion, currentJvmVersion)
 
