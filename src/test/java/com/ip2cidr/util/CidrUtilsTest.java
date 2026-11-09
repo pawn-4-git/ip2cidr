@@ -153,6 +153,7 @@ class CidrUtilsTest {
         assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress(null));
         assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("   "));
         assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("999.999.999.999"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress(":::"));
 
         assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseCidr(null));
         assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseCidr("   "));
