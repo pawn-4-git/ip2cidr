@@ -9,7 +9,7 @@
 1. **同一CIDRの集約**: 複数の入力IPアドレスが同一のCIDRに属する場合、1つの `WhoisCidrInfo` インスタンスにまとめて出力します。
 2. **IPアドレス順ソートと直前CIDR領域による即時判定（whois検索スキップ）**: 複数のIPアドレスを受け取ると、最初にIPアドレスの数値昇順に並び替えます。CIDRを判定した直後の次のIPアドレスが、直前に解決したCIDR範囲内（複数CIDRに分解された場合はその全ブロック）に含まれるかを即座にチェックし、`whois` コマンドを実行せず既に取得したCIDR情報を流用します。
 3. **レートリミット制御（通常5秒間隔・判定済み範囲ヒット時0.5秒・制限発生時は1分待機×最大10回リトライ）**: `whois` サーバーのレートリミットを考慮し、新規 `whois` 検索時は **5秒間隔**（デフォルト）、既に判定済みのCIDR範囲内のIPアドレスだった場合も次の `whois` 実行を空けるために **0.5秒** 待機します。万一 `whois` サーバーからレートリミット応答を受けた場合は、**1分間（60秒）待機してから最大10回まで自動的にリトライ**します。
-4. **IPv4 / IPv6 & 各種RIRフォーマット対応（中途半端なIP帯域のCIDR自動分解）**: ARIN / APNIC / RIPE / LACNIC / AFRINIC / JPNIC などの出力形式に対応し、明示的な `CIDR:` 行がない場合でも `inetnum` / `NetRange` のIP範囲からCIDRを算出・判定します。**IPアドレス帯域が単一のCIDR境界に収まらない中途半端な範囲である場合は、その帯域を過不足なく表現する複数のCIDRブロックへ自動的に分解**して保持・判定します。
+4. **IPv4 / IPv6 & 各種RIRフォーマット対応（`inetnum` / `route` 切替・中途半端なIP帯域のCIDR自動分解）**: ARIN / APNIC / RIPE / LACNIC / AFRINIC / JPNIC などの出力形式に対応し、割り当て範囲（`inetnum` / `inet6num` / `NetRange` / `CIDR`、デフォルト優先）とBGP経路情報（`route` / `route6`）のどちらをメインのCIDRとして採用するかをパラメータ（`-s inetnum|route` / `--inetnum` / `--route`）で切り替え可能です。また、参考資料として `CIDR(inetnum)`・`CIDR(route)`・`IP Range(inetnum)`・`IP Range(route)` の4項目も常時出力します。**IPアドレス帯域が単一のCIDR境界に収まらない中途半端な範囲である場合は、その帯域を過不足なく表現する複数のCIDRブロックへ自動的に分解**して保持・判定します。
 
 ### 解決アルゴリズム
 
@@ -72,16 +72,20 @@ public class Example {
         );
 
         for (WhoisCidrInfo info : results) {
-            System.out.println("CIDR       : " + info.getCidr()); // 例: 8.8.8.0/24
-            System.out.println("Network IP : " + info.getCidr().getIpAddress()); // 例: 8.8.8.0
-            System.out.println("PrefixLen  : " + info.getCidr().getPrefixLength()); // 例: 24
-            System.out.println("Matched IPs: " + info.getMatchedIpAddresses());
-            System.out.println("Country    : " + info.getCountry());
-            System.out.println("Registrant : " + info.getRegistrant());
-            System.out.println("NetName    : " + info.getNetName());
-            System.out.println("Admin      : " + info.getAdminContacts());
-            System.out.println("Tech       : " + info.getTechContacts());
-            System.out.println("Abuse      : " + info.getAbuseContacts());
+            System.out.println("CIDR            : " + info.getCidr()); // 例: 8.8.8.0/24
+            System.out.println("Network IP      : " + info.getCidr().getIpAddress()); // 例: 8.8.8.0
+            System.out.println("PrefixLen       : " + info.getCidr().getPrefixLength()); // 例: 24
+            System.out.println("CIDR(inetnum)   : " + info.getInetnumCidr());
+            System.out.println("CIDR(route)     : " + info.getRouteCidr());
+            System.out.println("IP Range(inetnum): " + info.getInetnumIpRange());
+            System.out.println("IP Range(route) : " + info.getRouteIpRange());
+            System.out.println("Matched IPs     : " + info.getMatchedIpAddresses());
+            System.out.println("Country         : " + info.getCountry());
+            System.out.println("Registrant      : " + info.getRegistrant());
+            System.out.println("NetName         : " + info.getNetName());
+            System.out.println("Admin           : " + info.getAdminContacts());
+            System.out.println("Tech            : " + info.getTechContacts());
+            System.out.println("Abuse           : " + info.getAbuseContacts());
         }
     }
 }
@@ -90,8 +94,11 @@ public class Example {
 ## CLIとしての実行例
 
 ```bash
-# 引数でIPアドレスを渡す場合（標準出力・CIDR単位）
+# 引数でIPアドレスを渡す場合（標準出力・CIDR単位・デフォルトは inetnum 優先）
 java -jar build/libs/ip2cidr-1.0.0.jar 8.8.8.8 8.8.8.4 1.1.1.1
+
+# 採用するCIDR情報源を route（BGP経路情報）に切り替える場合（-s route または --route）
+java -jar build/libs/ip2cidr-1.0.0.jar --route 212.87.192.53
 
 # ファイルからIPアドレスリストを読み込む場合
 java -jar build/libs/ip2cidr-1.0.0.jar -f ips.txt

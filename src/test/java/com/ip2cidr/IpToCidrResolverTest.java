@@ -174,6 +174,9 @@ class IpToCidrResolverTest {
                 IpToCidrResolver defaultResolver = new IpToCidrResolver();
                 assertNotNull(defaultResolver);
 
+                IpToCidrResolver sourceResolver = new IpToCidrResolver(WhoisParser.CidrSource.INETNUM);
+                assertNotNull(sourceResolver);
+
                 WhoisExecutor dummyExec = ip -> "CIDR: 192.0.2.0/24";
                 IpToCidrResolver customExecResolver = new IpToCidrResolver(dummyExec, Duration.ofMillis(1));
                 assertNotNull(customExecResolver);

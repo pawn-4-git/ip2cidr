@@ -44,6 +44,10 @@ class MainTest {
                     "--mode", "ip",
                     "--cidr",
                     "--ip",
+                    "-s", "route",
+                    "--source", "inetnum",
+                    "--route",
+                    "--inetnum",
                     "-f", inputFile.toString(),
                     "--file", inputFile.toString(),
                     "198.51.100.1",
@@ -105,6 +109,10 @@ class MainTest {
                 new Cidr("192.0.2.0", 24),
                 List.of(new Cidr("192.0.2.0", 25), new Cidr("192.0.2.128", 25)),
                 "192.0.2.0 - 192.0.2.255",
+                new Cidr("192.0.2.0", 23),
+                new Cidr("192.0.2.0", 24),
+                "192.0.2.0 - 192.0.3.255",
+                "192.0.2.0 - 192.0.2.255",
                 List.of("192.0.2.1", "192.0.2.2"),
                 "JP",
                 "Example Org 1",
@@ -148,6 +156,10 @@ class MainTest {
         String out = capturedOut.toString(StandardCharsets.UTF_8);
         assertTrue(out.contains("CIDR            : 192.0.2.0/24"));
         assertTrue(out.contains("All CIDRs       : 192.0.2.0/25, 192.0.2.128/25"));
+        assertTrue(out.contains("CIDR(inetnum)   : 192.0.2.0/23"));
+        assertTrue(out.contains("CIDR(route)     : 192.0.2.0/24"));
+        assertTrue(out.contains("IP Range(inetnum): 192.0.2.0 - 192.0.3.255"));
+        assertTrue(out.contains("IP Range(route) : 192.0.2.0 - 192.0.2.255"));
         assertTrue(out.contains("Matched IPs     : 192.0.2.1, 192.0.2.2"));
         assertTrue(out.contains("Descriptions    : Desc A | Desc B"));
         assertTrue(out.contains("Admin Contacts  : ADM-1"));

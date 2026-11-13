@@ -419,6 +419,22 @@ gradle test</code></pre>
                 <td data-i18n-html="cli.row6.desc"><code>--mode ip</code> のショートハンドです。指定すると出力単位をIPアドレス単位に切り替えます。</td>
               </tr>
               <tr>
+                <td><code>--source</code></td>
+                <td><code>-s</code></td>
+                <td><code>inetnum | route</code></td>
+                <td><strong><code>inetnum</code>（割り当て範囲優先）</strong></td>
+                <td>採用するCIDR情報源を切り替えます。デフォルトは <code>inetnum</code>（割り当て範囲 <code>inetnum</code> / <code>NetRange</code> /
+                  <code>CIDR</code> 優先）で、<code>route</code> を指定するとBGP経路情報（<code>route</code> /
+                  <code>route6</code>）を優先します（片方が存在しない場合はもう片方に自動フォールバック）。</td>
+              </tr>
+              <tr>
+                <td><code>--inetnum</code> / <code>--route</code></td>
+                <td>—</td>
+                <td data-i18n="cli.argNone">なし</td>
+                <td><strong><code>--inetnum</code> がデフォルト</strong></td>
+                <td>それぞれ <code>--source inetnum</code> および <code>--source route</code> のショートハンドです。</td>
+              </tr>
+              <tr>
                 <td><code>--raw</code></td>
                 <td>—</td>
                 <td data-i18n="cli.argNone">なし</td>
@@ -509,6 +525,10 @@ java -jar ip2cidr-1.0.0.jar -f ips.txt -m ip --csv result_ip.csv
               <li data-i18n-html="csv.cidrCol3"><code>PrefixLength</code> — プレフィックス長（例: <code>24</code>）</li>
               <li data-i18n-html="csv.cidrCol4"><code>AllCIDRs</code> — 検出された全CIDR一覧（<code>; </code>区切り）</li>
               <li data-i18n-html="csv.cidrCol5"><code>IPRange</code> — IP範囲表記（例: <code>8.8.8.0 - 8.8.8.255</code>）</li>
+              <li><code>CIDR(inetnum)</code> — 参考: 割り当て範囲（<code>inetnum</code> 等）由来のCIDR</li>
+              <li><code>CIDR(route)</code> — 参考: BGP経路情報（<code>route</code> 等）由来のCIDR</li>
+              <li><code>IP Range(inetnum)</code> — 参考: 割り当て範囲（<code>inetnum</code> 等）由来のIP範囲</li>
+              <li><code>IP Range(route)</code> — 参考: BGP経路情報（<code>route</code> 等）由来のIP範囲</li>
               <li data-i18n-html="csv.cidrCol6"><code>MatchedIPs</code> — 該当した入力IP一覧（<code>; </code>区切り）</li>
               <li data-i18n-html="csv.cidrCol7"><code>Country</code> — 国コード（例: <code>US</code>, <code>JP</code>）</li>
               <li data-i18n-html="csv.cidrCol8"><code>Registrant</code> — 登録組織名・登録者名</li>
@@ -532,6 +552,10 @@ java -jar ip2cidr-1.0.0.jar -f ips.txt -m ip --csv result_ip.csv
               <li data-i18n-html="csv.cidrCol3"><code>PrefixLength</code> — プレフィックス長（例: <code>24</code>）</li>
               <li data-i18n-html="csv.cidrCol4"><code>AllCIDRs</code> — 検出された全CIDR一覧（<code>; </code>区切り）</li>
               <li data-i18n-html="csv.cidrCol5"><code>IPRange</code> — IP範囲表記（例: <code>8.8.8.0 - 8.8.8.255</code>）</li>
+              <li><code>CIDR(inetnum)</code> — 参考: 割り当て範囲（<code>inetnum</code> 等）由来のCIDR</li>
+              <li><code>CIDR(route)</code> — 参考: BGP経路情報（<code>route</code> 等）由来のCIDR</li>
+              <li><code>IP Range(inetnum)</code> — 参考: 割り当て範囲（<code>inetnum</code> 等）由来のIP範囲</li>
+              <li><code>IP Range(route)</code> — 参考: BGP経路情報（<code>route</code> 等）由来のIP範囲</li>
               <li data-i18n-html="csv.ipCol7"><code>Country</code> — 国コード</li>
               <li data-i18n-html="csv.cidrCol8"><code>Registrant</code> — 登録組織名・登録者名</li>
               <li data-i18n-html="csv.cidrCol9"><code>NetName</code> — ネットワーク名</li>
@@ -776,6 +800,18 @@ public class CustomResolverExample {
                 <td><code>getIpRange()</code></td>
                 <td><code>String</code></td>
                 <td data-i18n-html="api.m3.desc">IPアドレス範囲表記（例: <code>"8.8.8.0 - 8.8.8.255"</code>）を返します。</td>
+              </tr>
+              <tr>
+                <td><code>getInetnumCidr()</code> / <code>getRouteCidr()</code></td>
+                <td><code>Cidr</code></td>
+                <td>参考資料としての <code>inetnum</code>（割り当て範囲）および <code>route</code>（BGP経路情報）由来のCIDRをそれぞれ返します（存在しない場合は
+                  <code>null</code>）。</td>
+              </tr>
+              <tr>
+                <td><code>getInetnumIpRange()</code> / <code>getRouteIpRange()</code></td>
+                <td><code>String</code></td>
+                <td>参考資料としての <code>inetnum</code>（割り当て範囲）および
+                  <code>route</code>（BGP経路情報）由来のIP範囲表記をそれぞれ返します（存在しない場合は空文字列）。</td>
               </tr>
               <tr>
                 <td><code>getMatchedIpAddresses()</code></td>

@@ -5,6 +5,7 @@ import com.ip2cidr.model.Cidr;
 import com.ip2cidr.model.WhoisCidrInfo;
 import com.ip2cidr.util.CsvFormatter;
 import com.ip2cidr.util.CsvFormatter.OutputMode;
+import com.ip2cidr.whois.WhoisParser.CidrSource;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -26,6 +27,7 @@ public class Main {
         boolean showRaw = false;
         Path outputFilePath = null;
         OutputMode outputMode = OutputMode.CIDR;
+        CidrSource cidrSource = CidrSource.INETNUM;
 
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
@@ -59,6 +61,23 @@ public class Main {
                 outputMode = OutputMode.CIDR;
             } else if ("--ip".equals(arg)) {
                 outputMode = OutputMode.IP;
+            } else if ("-s".equals(arg) || "--source".equals(arg)) {
+                if (i + 1 >= args.length) {
+                    System.err.println("Error: Missing source (inetnum or route) after " + arg);
+                    printUsage();
+                    System.exit(1);
+                }
+                try {
+                    cidrSource = CidrSource.fromString(args[++i]);
+                } catch (IllegalArgumentException e) {
+                    System.err.println("Error: " + e.getMessage());
+                    printUsage();
+                    System.exit(1);
+                }
+            } else if ("--route".equals(arg)) {
+                cidrSource = CidrSource.ROUTE;
+            } else if ("--inetnum".equals(arg)) {
+                cidrSource = CidrSource.INETNUM;
             } else if ("-f".equals(arg) || "--file".equals(arg)) {
                 if (i + 1 >= args.length) {
                     System.err.println("Error: Missing file path after " + arg);
@@ -108,7 +127,7 @@ public class Main {
             return;
         }
 
-        IpToCidrResolver resolver = new IpToCidrResolver();
+        IpToCidrResolver resolver = new IpToCidrResolver(cidrSource);
         List<WhoisCidrInfo> results = resolver.resolve(ipAddresses);
 
         // ファイル出力が指定されている場合はCSVファイルへ書き出し
@@ -137,14 +156,7 @@ public class Main {
             if (i > 0) {
                 System.out.println("------------------------------------------------------------");
             }
-            System.out.println("CIDR            : " + info.getCidr());
-            if (info.getAllCidrs().size() > 1) {
-                String allCidrsStr = info.getAllCidrs().stream()
-                        .map(Cidr::toString)
-                        .collect(Collectors.joining(", "));
-                System.out.println("All CIDRs       : " + allCidrsStr);
-            }
-            System.out.println("IP Range        : " + info.getIpRange());
+            printCidrAndRangeDetails(info);
             System.out.println("Matched IPs     : " + String.join(", ", info.getMatchedIpAddresses()));
             printCommonDetails(info, showRaw);
         }
@@ -159,17 +171,25 @@ public class Main {
                 }
                 first = false;
                 System.out.println("IP Address      : " + ip);
-                System.out.println("CIDR            : " + info.getCidr());
-                if (info.getAllCidrs().size() > 1) {
-                    String allCidrsStr = info.getAllCidrs().stream()
-                            .map(Cidr::toString)
-                            .collect(Collectors.joining(", "));
-                    System.out.println("All CIDRs       : " + allCidrsStr);
-                }
-                System.out.println("IP Range        : " + info.getIpRange());
+                printCidrAndRangeDetails(info);
                 printCommonDetails(info, showRaw);
             }
         }
+    }
+
+    private static void printCidrAndRangeDetails(WhoisCidrInfo info) {
+        System.out.println("CIDR            : " + info.getCidr());
+        if (info.getAllCidrs().size() > 1) {
+            String allCidrsStr = info.getAllCidrs().stream()
+                    .map(Cidr::toString)
+                    .collect(Collectors.joining(", "));
+            System.out.println("All CIDRs       : " + allCidrsStr);
+        }
+        System.out.println("IP Range        : " + info.getIpRange());
+        System.out.println("CIDR(inetnum)   : " + (info.getInetnumCidr() != null ? info.getInetnumCidr() : ""));
+        System.out.println("CIDR(route)     : " + (info.getRouteCidr() != null ? info.getRouteCidr() : ""));
+        System.out.println("IP Range(inetnum): " + info.getInetnumIpRange());
+        System.out.println("IP Range(route) : " + info.getRouteIpRange());
     }
 
     private static void printCommonDetails(WhoisCidrInfo info, boolean showRaw) {
@@ -197,13 +217,17 @@ public class Main {
     private static void printUsage() {
         System.out.println("Usage: java -jar ip2cidr.jar [options] <ip1> <ip2> ...");
         System.out.println("Options:");
-        System.out.println("  -f, --file <path>     Read IP addresses from a file (one IP per line)");
-        System.out.println("  -c, --csv <path>      Write results to the specified CSV file (default: stdout)");
-        System.out.println("  -o, --output <path>   Alias for --csv <path>");
-        System.out.println("  -m, --mode <cidr|ip>  Output unit mode: 'cidr' (per CIDR, default) or 'ip' (per IP)");
-        System.out.println("  --cidr                Shorthand for --mode cidr");
-        System.out.println("  --ip                  Shorthand for --mode ip");
-        System.out.println("  --raw                 Include full raw whois output");
-        System.out.println("  -h, --help            Show this help message");
+        System.out.println("  -f, --file <path>            Read IP addresses from a file (one IP per line)");
+        System.out.println(
+                "  -c, --csv <path>             Write results to the specified CSV file (default: stdout)");
+        System.out.println("  -o, --output <path>          Alias for --csv <path>");
+        System.out.println("  -m, --mode <cidr|ip>         Output unit mode: 'cidr' (per CIDR, default) or 'ip' (per IP)");
+        System.out.println("  --cidr                       Shorthand for --mode cidr");
+        System.out.println("  --ip                         Shorthand for --mode ip");
+        System.out.println("  -s, --source <inetnum|route> CIDR source to adopt: 'inetnum' (default) or 'route'");
+        System.out.println("  --inetnum                    Shorthand for --source inetnum (default)");
+        System.out.println("  --route                      Shorthand for --source route");
+        System.out.println("  --raw                        Include full raw whois output");
+        System.out.println("  -h, --help                   Show this help message");
     }
 }
