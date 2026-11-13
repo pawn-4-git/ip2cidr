@@ -153,7 +153,43 @@ class CidrUtilsTest {
         assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress(null));
         assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("   "));
         assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("999.999.999.999"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("192.0.2"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("192.0.2.1.2"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("192.0.2."));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("192.0.2.1234"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("192.0.2.01"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("192.0.2.1a"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("192.0.2./"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("192.0.2.1%lo0"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("fe80::1%"));
+
+        // IPv6 厳密検証（有効パターン）
+        assertTrue(CidrUtils.isValidIpAddress("::"));
+        assertTrue(CidrUtils.isValidIpAddress("::1"));
+        assertTrue(CidrUtils.isValidIpAddress("2001:db8::"));
+        assertTrue(CidrUtils.isValidIpAddress("2001:DB8:ABCD:EF01:2345:6789:abcd:ef01"));
+        assertTrue(CidrUtils.isValidIpAddress("::ffff:192.0.2.128"));
+        assertTrue(CidrUtils.isValidIpAddress("64:ff9b::192.0.2.1"));
+
+        // IPv6 厳密検証（壊れたIPv6表記・DNS逆引きフォールバックを引き起こしうる不正入力の拒否）
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress(":"));
         assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress(":::"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("2001::db8::1"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress(":1:2:3:4:5:6:7:8"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("1:2:3:4:5:6:7:8:"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("1:2:3:4:5:6:7"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("1:2:3:4:5:6:7:8:9"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("1:2:3:4::5:6:7:8"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("12345::1"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("1::12345"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("1:2:3:4:5:6:7:12345"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("2001:db8:gggg::1"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("2001:db8:GGG::1"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("2001:db8:/::1"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("2001:db8:@::1"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("2001:db8:`::1"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("::ffff:999.0.2.1"));
+        assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseIpAddress("192.0.2.1::1"));
 
         assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseCidr(null));
         assertThrows(IllegalArgumentException.class, () -> CidrUtils.parseCidr("   "));

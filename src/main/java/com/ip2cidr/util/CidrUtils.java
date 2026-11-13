@@ -6,22 +6,23 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * IPv4 / IPv6 アドレスおよびCIDR・IP範囲変換のユーティリティクラス。
  */
 public final class CidrUtils {
 
-    private static final Pattern IP_LITERAL_PATTERN = Pattern.compile(
-            "^(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}"
-                    + "|[0-9a-fA-F:]*:[0-9a-fA-F:.]*)$");
+    private static final int IPV4_BYTE_LENGTH = 4;
+    private static final int IPV6_BYTE_LENGTH = 16;
+    private static final int IPV6_GROUP_COUNT = 8;
 
     private CidrUtils() {
     }
 
     /**
-     * DNS逆引きを行わずにIPアドレスリテラルを解析します（Java 21互換）。
+     * DNS逆引きやホスト名解決を一切行わずに、IPv4 / IPv6 アドレスリテラルを厳密に検証・解析します（Java 21互換）。
+     * {@link InetAddress#getByName(String)}（内部で {@code getAllByName} によるDNS解決へフォールバックしうる）は使用せず、
+     * リテラル文字列をバイト配列（4バイトまたは16バイト）へ変換した上で {@link InetAddress#getByAddress(byte[])} を呼び出します。
      */
     public static InetAddress parseIpAddress(String ipText) {
         if (ipText == null || ipText.isBlank()) {
@@ -29,17 +30,162 @@ public final class CidrUtils {
         }
         String cleaned = ipText.trim();
         int zoneIdx = cleaned.indexOf('%');
-        if (zoneIdx > 0) {
+        if (zoneIdx >= 0) {
+            // ゾーンインデックス（%lo0 等）はIPv6リテラルのみ許可し、%の前後が空でないことを要求する
+            if (zoneIdx == 0 || zoneIdx == cleaned.length() - 1 || cleaned.indexOf(':') < 0) {
+                throw new IllegalArgumentException("Invalid IP address literal: " + ipText);
+            }
             cleaned = cleaned.substring(0, zoneIdx);
         }
-        if (!IP_LITERAL_PATTERN.matcher(cleaned).matches()) {
+
+        byte[] rawBytes = cleaned.indexOf(':') >= 0
+                ? textToNumericFormatV6(cleaned)
+                : textToNumericFormatV4(cleaned);
+        if (rawBytes == null) {
             throw new IllegalArgumentException("Invalid IP address literal: " + ipText);
         }
         try {
-            return InetAddress.getByName(cleaned);
+            return InetAddress.getByAddress(rawBytes);
         } catch (UnknownHostException e) {
-            throw new IllegalArgumentException("Invalid IP address literal: " + ipText, e);
+            throw new IllegalStateException("Unexpected byte length for InetAddress", e);
         }
+    }
+
+    /**
+     * IPv4リテラル文字列（"a.b.c.d"）を検証し、4バイト配列に変換します。不正な場合は {@code null} を返します。
+     */
+    static byte[] textToNumericFormatV4(String text) {
+        String[] parts = text.split("\\.", -1);
+        if (parts.length != IPV4_BYTE_LENGTH) {
+            return null;
+        }
+        byte[] bytes = new byte[IPV4_BYTE_LENGTH];
+        for (int i = 0; i < IPV4_BYTE_LENGTH; i++) {
+            String part = parts[i];
+            if (part.isEmpty() || part.length() > 3) {
+                return null;
+            }
+            if (part.length() > 1 && part.charAt(0) == '0') {
+                return null;
+            }
+            int val = 0;
+            for (int j = 0; j < part.length(); j++) {
+                char c = part.charAt(j);
+                if (c < '0' || c > '9') {
+                    return null;
+                }
+                val = val * 10 + (c - '0');
+            }
+            if (val > 255) {
+                return null;
+            }
+            bytes[i] = (byte) val;
+        }
+        return bytes;
+    }
+
+    /**
+     * IPv6リテラル文字列（8グループ・"::"ゼロ圧縮・末尾IPv4埋め込み表記）をRFC 4291準拠で検証し、
+     * 16バイト配列に変換します。不正な場合は {@code null} を返します。
+     */
+    static byte[] textToNumericFormatV6(String text) {
+        if (text.length() < 2) {
+            return null;
+        }
+
+        String hexText = text;
+        if (hexText.indexOf('.') >= 0) {
+            int lastColon = hexText.lastIndexOf(':');
+            byte[] ipv4Bytes = textToNumericFormatV4(hexText.substring(lastColon + 1));
+            if (ipv4Bytes == null) {
+                return null;
+            }
+            String ipv4HexGroups = String.format(
+                    "%02x%02x:%02x%02x",
+                    ipv4Bytes[0] & 0xff,
+                    ipv4Bytes[1] & 0xff,
+                    ipv4Bytes[2] & 0xff,
+                    ipv4Bytes[3] & 0xff);
+            hexText = hexText.substring(0, lastColon + 1) + ipv4HexGroups;
+        }
+
+        if ((hexText.startsWith(":") && !hexText.startsWith("::"))
+                || (hexText.endsWith(":") && !hexText.endsWith("::"))) {
+            return null;
+        }
+
+        byte[] bytes = new byte[IPV6_BYTE_LENGTH];
+        int doubleColonIdx = hexText.indexOf("::");
+        if (doubleColonIdx >= 0) {
+            if (hexText.indexOf("::", doubleColonIdx + 1) >= 0) {
+                return null;
+            }
+            String leftPart = hexText.substring(0, doubleColonIdx);
+            String rightPart = hexText.substring(doubleColonIdx + 2);
+            String[] leftGroups = leftPart.isEmpty() ? new String[0] : leftPart.split(":", -1);
+            String[] rightGroups = rightPart.isEmpty() ? new String[0] : rightPart.split(":", -1);
+
+            if (leftGroups.length + rightGroups.length >= IPV6_GROUP_COUNT) {
+                return null;
+            }
+
+            for (int i = 0; i < leftGroups.length; i++) {
+                int val = parseHexGroup16(leftGroups[i]);
+                if (val < 0) {
+                    return null;
+                }
+                bytes[i * 2] = (byte) (val >>> 8);
+                bytes[i * 2 + 1] = (byte) val;
+            }
+
+            int rightStartGroup = IPV6_GROUP_COUNT - rightGroups.length;
+            for (int i = 0; i < rightGroups.length; i++) {
+                int val = parseHexGroup16(rightGroups[i]);
+                if (val < 0) {
+                    return null;
+                }
+                int groupIdx = rightStartGroup + i;
+                bytes[groupIdx * 2] = (byte) (val >>> 8);
+                bytes[groupIdx * 2 + 1] = (byte) val;
+            }
+            return bytes;
+        }
+
+        String[] groups = hexText.split(":", -1);
+        if (groups.length != IPV6_GROUP_COUNT) {
+            return null;
+        }
+        for (int i = 0; i < IPV6_GROUP_COUNT; i++) {
+            int val = parseHexGroup16(groups[i]);
+            if (val < 0) {
+                return null;
+            }
+            bytes[i * 2] = (byte) (val >>> 8);
+            bytes[i * 2 + 1] = (byte) val;
+        }
+        return bytes;
+    }
+
+    private static int parseHexGroup16(String group) {
+        if (group.length() > 4) {
+            return -1;
+        }
+        int val = 0;
+        for (int i = 0; i < group.length(); i++) {
+            char c = group.charAt(i);
+            int digit;
+            if (c >= '0' && c <= '9') {
+                digit = c - '0';
+            } else if (c >= 'a' && c <= 'f') {
+                digit = c - 'a' + 10;
+            } else if (c >= 'A' && c <= 'F') {
+                digit = c - 'A' + 10;
+            } else {
+                return -1;
+            }
+            val = (val << 4) | digit;
+        }
+        return val;
     }
 
     /**
@@ -68,7 +214,8 @@ public final class CidrUtils {
     }
 
     /**
-     * CIDR表記（例: "203.0.113.0/24", "192.168/16", "2001:db8::/32"）を解析してCidrBlockを生成します。
+     * CIDR表記（例: "203.0.113.0/24", "192.168/16",
+     * "2001:db8::/32"）を解析してCidrBlockを生成します。
      */
     public static CidrBlock parseCidr(String cidrText) {
         if (cidrText == null || cidrText.isBlank()) {
@@ -207,4 +354,3 @@ public final class CidrUtils {
         return ipv4Part;
     }
 }
-
