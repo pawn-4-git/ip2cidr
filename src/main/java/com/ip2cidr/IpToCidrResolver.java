@@ -87,12 +87,19 @@ public class IpToCidrResolver {
     private boolean hasExecutedWhois = false;
 
     /**
-     * デフォルト設定（OSのwhoisコマンド使用、通常検索間隔5秒、キャッシュヒット時0.5秒待機、レートリミット発生時1分待機）でリゾルバを生成します。
+     * デフォルト設定（OSのwhoisコマンド使用、inetnum優先、通常検索間隔5秒、キャッシュヒット時0.5秒待機、レートリミット発生時1分待機）でリゾルバを生成します。
      */
     public IpToCidrResolver() {
+        this(WhoisParser.CidrSource.INETNUM);
+    }
+
+    /**
+     * 採用するCIDR情報源（{@link WhoisParser.CidrSource#INETNUM} または {@link WhoisParser.CidrSource#ROUTE}）を指定してリゾルバを生成します。
+     */
+    public IpToCidrResolver(WhoisParser.CidrSource cidrSource) {
         this(
                 new CommandWhoisExecutor(),
-                new WhoisParser(),
+                new WhoisParser(cidrSource),
                 DEFAULT_RATE_LIMIT_INTERVAL,
                 DEFAULT_CACHE_HIT_INTERVAL,
                 DEFAULT_RATE_LIMIT_COOLDOWN,

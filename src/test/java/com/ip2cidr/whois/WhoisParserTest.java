@@ -8,6 +8,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -189,13 +190,17 @@ class WhoisParserTest {
                                 unknown-key:    some value
                                 """;
 
+                // デフォルトは INETNUM 優先のため inetnum系の最も具体的な 192.0.2.0/26 が採用される
                 WhoisCidrInfo info = parser.parse("192.0.2.5", raw);
-                // 192.0.2.0/26 が最も具体的（/26 > /25 > /24 > /16）なので選択される
                 assertEquals(new Cidr("192.0.2.0", 26), info.getCidr());
                 assertEquals(
                                 List.of(new Cidr("192.0.2.0", 25), new Cidr("192.0.2.0", 26),
                                                 new Cidr("192.0.2.128", 25)),
                                 info.getAllCidrs());
+                assertEquals(new Cidr("192.0.2.0", 26), info.getInetnumCidr());
+                assertEquals(new Cidr("192.0.2.0", 24), info.getRouteCidr());
+                assertEquals("192.0.2.0 - 192.0.2.255", info.getInetnumIpRange());
+                assertEquals("192.0.2.0 - 192.0.2.255", info.getRouteIpRange());
                 assertEquals("DE", info.getCountry());
                 // orgCandidates も descriptions も空のため netName にフォールバック
                 assertEquals("ONLY-NETNAME", info.getRegistrant());
@@ -203,23 +208,47 @@ class WhoisParserTest {
                 assertEquals(List.of("TECH-H", "ZONE-H"), info.getTechContacts());
                 assertEquals(List.of("ABUSE-H", "ORG-ABUSE-H"), info.getAbuseContacts());
 
-                // 2. 同じプレフィックス長(/24)で明示CIDR同士が並んだ場合、後半の候補が優先され、その後の非明示(/24)では上書きされないこと
+                // ROUTE 優先を指定した場合は route: 192.0.2.0/24 が採用され、inetnum側は参考項目として保持される
+                WhoisCidrInfo routeModeInfo = parser.parse("192.0.2.5", raw, WhoisParser.CidrSource.ROUTE);
+                assertEquals(new Cidr("192.0.2.0", 24), routeModeInfo.getCidr());
+                assertEquals(new Cidr("192.0.2.0", 26), routeModeInfo.getInetnumCidr());
+                assertEquals(new Cidr("192.0.2.0", 24), routeModeInfo.getRouteCidr());
+                assertEquals("192.0.2.0 - 192.0.2.255", routeModeInfo.getInetnumIpRange());
+                assertEquals("192.0.2.0 - 192.0.2.255", routeModeInfo.getRouteIpRange());
+
+                // 2. 同じプレフィックス長(/24)で非明示(inetnum)→明示(CIDR)→明示(CIDR)→非明示(inetnum)が並んだ場合のタイブレーク検証
                 String rawTieBreak = """
-                                route:   192.0.2.0/24
+                                inetnum: 192.0.2.0 - 192.0.2.255
+                                CIDR:    192.0.2.0/24
                                 CIDR:    192.0.2.0/24
                                 inetnum: 192.0.2.0 - 192.0.2.255
+                                route:   192.0.2.0/24
+                                route6:  invalid-route
                                 """;
-                WhoisCidrInfo tieInfo = parser.parse("192.0.2.1", rawTieBreak);
+                WhoisCidrInfo tieInfo = parser.parse("192.0.2.1", rawTieBreak, null);
                 assertEquals(new Cidr("192.0.2.0", 24), tieInfo.getCidr());
                 assertEquals("", tieInfo.getRegistrant());
 
                 // 3. 対象IPを直接包含するブロックが存在しない場合、逆順走査で /0 をスキップして最後の有効候補にフォールバックすること
                 String rawNonContaining = """
-                                route: 198.51.100.0/24
-                                route: 0.0.0.0/0
+                                inetnum: 198.51.100.0 - 198.51.100.255
+                                route:   198.51.100.0/24
+                                route:   0.0.0.0/0
                                 """;
                 WhoisCidrInfo nonContainingInfo = parser.parse("192.0.2.1", rawNonContaining);
                 assertEquals(new Cidr("198.51.100.0", 24), nonContainingInfo.getCidr());
+                assertEquals(new Cidr("198.51.100.0", 24), nonContainingInfo.getInetnumCidr());
+                assertEquals(new Cidr("198.51.100.0", 24), nonContainingInfo.getRouteCidr());
+
+                // route のみ存在し inetnum が存在しない場合（INETNUM モード指定でも route にフォールバックすること）
+                WhoisParser inetnumParser = new WhoisParser(WhoisParser.CidrSource.INETNUM);
+                assertEquals(WhoisParser.CidrSource.INETNUM, inetnumParser.getCidrSource());
+                WhoisCidrInfo routeOnlyFallback = inetnumParser.parse("192.0.2.1", "route: 192.0.2.0/24");
+                assertEquals(new Cidr("192.0.2.0", 24), routeOnlyFallback.getCidr());
+                assertNull(routeOnlyFallback.getInetnumCidr());
+                assertEquals(new Cidr("192.0.2.0", 24), routeOnlyFallback.getRouteCidr());
+                assertEquals("", routeOnlyFallback.getInetnumIpRange());
+                assertEquals("192.0.2.0 - 192.0.2.255", routeOnlyFallback.getRouteIpRange());
 
                 // /0 しか候補がない場合は selectBestCandidate が null を返し、単一ホストCIDR(/32)にフォールバックすること
                 WhoisCidrInfo onlyZeroPrefixInfo = parser.parse("192.0.2.1", "route: 0.0.0.0/0");
@@ -235,5 +264,49 @@ class WhoisParserTest {
                 // 5. queriedIp が null または空白の場合は例外
                 assertThrows(IllegalArgumentException.class, () -> parser.parse(null, ""));
                 assertThrows(IllegalArgumentException.class, () -> parser.parse("   ", ""));
+        }
+
+        @Test
+        void testCidrSourceSwitchingBetweenRouteAndInetnum() {
+                String ripeWhois = """
+                                inetnum:        212.87.192.0 - 212.87.193.255
+                                netname:        AKARI-JP-TYO1-03
+                                descr:          Akari Networks
+                                country:        NL
+                                route:          212.87.192.0/24
+                                origin:         AS38136
+                                """;
+
+                // デフォルト（INETNUM）では 212.87.192.0/23 (212.87.192.0 - 212.87.193.255) が採用される
+                WhoisParser defaultInetnumParser = new WhoisParser(null);
+                assertEquals(WhoisParser.CidrSource.INETNUM, defaultInetnumParser.getCidrSource());
+                WhoisCidrInfo inetnumResult = defaultInetnumParser.parse("212.87.192.53", ripeWhois);
+                assertEquals(new Cidr("212.87.192.0", 23), inetnumResult.getCidr());
+                assertEquals("212.87.192.0 - 212.87.193.255", inetnumResult.getIpRange());
+                assertEquals(new Cidr("212.87.192.0", 23), inetnumResult.getInetnumCidr());
+                assertEquals(new Cidr("212.87.192.0", 24), inetnumResult.getRouteCidr());
+                assertEquals("212.87.192.0 - 212.87.193.255", inetnumResult.getInetnumIpRange());
+                assertEquals("212.87.192.0 - 212.87.192.255", inetnumResult.getRouteIpRange());
+
+                // ROUTE 指定では 212.87.192.0/24 が採用される
+                WhoisParser routeParser = new WhoisParser(WhoisParser.CidrSource.ROUTE);
+                assertEquals(WhoisParser.CidrSource.ROUTE, routeParser.getCidrSource());
+                WhoisCidrInfo routeResult = routeParser.parse("212.87.192.53", ripeWhois);
+                assertEquals(new Cidr("212.87.192.0", 24), routeResult.getCidr());
+                assertEquals("212.87.192.0 - 212.87.192.255", routeResult.getIpRange());
+                assertEquals(new Cidr("212.87.192.0", 23), routeResult.getInetnumCidr());
+                assertEquals(new Cidr("212.87.192.0", 24), routeResult.getRouteCidr());
+                assertEquals("212.87.192.0 - 212.87.193.255", routeResult.getInetnumIpRange());
+                assertEquals("212.87.192.0 - 212.87.192.255", routeResult.getRouteIpRange());
+
+                // CidrSource.fromString の検証
+                assertEquals(WhoisParser.CidrSource.INETNUM, WhoisParser.CidrSource.fromString(null));
+                assertEquals(WhoisParser.CidrSource.INETNUM, WhoisParser.CidrSource.fromString("   "));
+                assertEquals(WhoisParser.CidrSource.ROUTE, WhoisParser.CidrSource.fromString("route"));
+                assertEquals(WhoisParser.CidrSource.ROUTE, WhoisParser.CidrSource.fromString(" ROUTE6 "));
+                assertEquals(WhoisParser.CidrSource.INETNUM, WhoisParser.CidrSource.fromString("inetnum"));
+                assertEquals(WhoisParser.CidrSource.INETNUM, WhoisParser.CidrSource.fromString(" inet6num "));
+                assertEquals(WhoisParser.CidrSource.INETNUM, WhoisParser.CidrSource.fromString("NetRange"));
+                assertThrows(IllegalArgumentException.class, () -> WhoisParser.CidrSource.fromString("unknown"));
         }
 }

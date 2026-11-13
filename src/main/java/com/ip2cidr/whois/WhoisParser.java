@@ -20,20 +20,18 @@ import java.util.regex.Pattern;
  */
 public class WhoisParser {
 
-    private static final Pattern KEY_VALUE_PATTERN =
-            Pattern.compile("^\\s*([A-Za-z0-9_\\-]+)\\s*:\\s*(.+?)\\s*$");
+    private static final Pattern KEY_VALUE_PATTERN = Pattern.compile("^\\s*([A-Za-z0-9_\\-]+)\\s*:\\s*(.+?)\\s*$");
 
     // JPNIC形式: "a. [Network Number] 192.0.2.0/24" または "[ネットワーク番号] 192.0.2.0/24"
-    private static final Pattern JPNIC_PATTERN =
-            Pattern.compile("^\\s*(?:[a-z]\\.)?\\s*\\[([^\\]]+)\\]\\s*(.+?)\\s*$");
+    private static final Pattern JPNIC_PATTERN = Pattern.compile("^\\s*(?:[a-z]\\.)?\\s*\\[([^\\]]+)\\]\\s*(.+?)\\s*$");
 
     // "% Abuse contact for '1.1.1.0 - 1.1.1.255' is 'abuse@cloudflare.com'"
-    private static final Pattern COMMENT_ABUSE_EMAIL_PATTERN =
-            Pattern.compile("(?i)abuse\\s+contact\\s+for\\s+.*\\s+is\\s+'([^']+)'");
+    private static final Pattern COMMENT_ABUSE_EMAIL_PATTERN = Pattern
+            .compile("(?i)abuse\\s+contact\\s+for\\s+.*\\s+is\\s+'([^']+)'");
 
     // "192.0.2.0 - 192.0.2.255" または "2001:db8:: - 2001:db8:ffff::"
-    private static final Pattern IP_RANGE_PATTERN =
-            Pattern.compile("^\\s*([0-9a-fA-F:.]+)\\s*-\\s*([0-9a-fA-F:.]+)\\s*$");
+    private static final Pattern IP_RANGE_PATTERN = Pattern
+            .compile("^\\s*([0-9a-fA-F:.]+)\\s*-\\s*([0-9a-fA-F:.]+)\\s*$");
 
     // 各RIR（APNIC/RIPE/ARIN/LACNIC/AFRINIC/JPNIC等）のレートリミット・一時ブロック応答パターン
     private static final Pattern RATE_LIMIT_PATTERN = Pattern.compile(
@@ -46,6 +44,33 @@ public class WhoisParser {
                     + "|connection\\s+reset\\s+by\\s+peer"
                     + "|connection\\s+refused"
                     + "|operation\\s+timed\\s+out)");
+
+    /**
+     * CIDRおよびIP範囲として採用するWHOIS情報源の優先モード。
+     */
+    public enum CidrSource {
+        /**
+         * inetnum / inet6num / NetRange / CIDR（割り当て範囲）を優先して採用（デフォルト）。存在しない場合は route
+         * 系にフォールバック。
+         */
+        INETNUM,
+        /**
+         * route / route6（BGP経路情報）を優先して採用。存在しない場合は inetnum 系にフォールバック。
+         */
+        ROUTE;
+
+        public static CidrSource fromString(String value) {
+            if (value == null || value.isBlank()) {
+                return INETNUM;
+            }
+            return switch (value.trim().toLowerCase(Locale.ROOT)) {
+                case "inetnum", "inet6num", "netrange" -> INETNUM;
+                case "route", "route6" -> ROUTE;
+                default -> throw new IllegalArgumentException(
+                        "Invalid source '" + value + "'. Supported sources are: inetnum, route");
+            };
+        }
+    }
 
     /**
      * 解析結果（WhoisCidrInfo と 判定用CidrBlockリストのペア）。
@@ -68,6 +93,35 @@ public class WhoisParser {
             }
             return best;
         }
+
+        CidrBlock resolvePrimaryBlock(InetAddress targetIp) {
+            CidrBlock matched = findMatchingBlock(targetIp);
+            return matched != null ? matched : blocks.getFirst();
+        }
+    }
+
+    private final CidrSource cidrSource;
+
+    /**
+     * デフォルト設定（{@link CidrSource#INETNUM} 優先）でパーサーを生成します。
+     */
+    public WhoisParser() {
+        this(CidrSource.INETNUM);
+    }
+
+    /**
+     * 採用するCIDR情報源（{@link CidrSource#INETNUM} または
+     * {@link CidrSource#ROUTE}）を指定してパーサーを生成します。
+     */
+    public WhoisParser(CidrSource cidrSource) {
+        this.cidrSource = cidrSource != null ? cidrSource : CidrSource.INETNUM;
+    }
+
+    /**
+     * このパーサーに設定されているCIDR情報源の優先モードを返します。
+     */
+    public CidrSource getCidrSource() {
+        return cidrSource;
     }
 
     /**
@@ -84,23 +138,40 @@ public class WhoisParser {
      * whois出力と検索対象IPアドレスから {@link WhoisCidrInfo} を生成します。
      */
     public WhoisCidrInfo parse(String queriedIp, String rawWhoisOutput) {
-        return parseWithBlocks(queriedIp, rawWhoisOutput).info();
+        return parseWithBlocks(queriedIp, rawWhoisOutput, this.cidrSource).info();
+    }
+
+    /**
+     * whois出力・検索対象IPアドレス・優先するCIDR情報源から {@link WhoisCidrInfo} を生成します。
+     */
+    public WhoisCidrInfo parse(String queriedIp, String rawWhoisOutput, CidrSource sourceOverride) {
+        return parseWithBlocks(queriedIp, rawWhoisOutput, sourceOverride).info();
     }
 
     /**
      * whois出力と検索対象IPアドレスから {@link ParsedResult}（情報クラス＋CidrBlock一覧）を生成します。
      */
     public ParsedResult parseWithBlocks(String queriedIp, String rawWhoisOutput) {
+        return parseWithBlocks(queriedIp, rawWhoisOutput, this.cidrSource);
+    }
+
+    /**
+     * whois出力・検索対象IPアドレス・優先するCIDR情報源から
+     * {@link ParsedResult}（情報クラス＋CidrBlock一覧）を生成します。
+     */
+    public ParsedResult parseWithBlocks(String queriedIp, String rawWhoisOutput, CidrSource sourceOverride) {
         if (queriedIp == null || queriedIp.isBlank()) {
             throw new IllegalArgumentException("queriedIp must not be null or blank");
         }
         if (rawWhoisOutput == null) {
             rawWhoisOutput = "";
         }
+        CidrSource effectiveSource = sourceOverride != null ? sourceOverride : this.cidrSource;
 
         InetAddress targetAddress = CidrUtils.parseIpAddress(queriedIp.trim());
 
-        List<NetworkCandidate> candidates = new ArrayList<>();
+        List<NetworkCandidate> inetnumCandidates = new ArrayList<>();
+        List<NetworkCandidate> routeCandidates = new ArrayList<>();
         int candidateOrder = 0;
 
         String country = "";
@@ -137,7 +208,7 @@ public class WhoisParser {
                         case "network number", "ネットワーク番号" -> {
                             NetworkCandidate cand = parseNetworkValue(jpVal, candidateOrder++);
                             if (cand != null) {
-                                candidates.add(cand);
+                                inetnumCandidates.add(cand);
                             }
                         }
                         case "network name", "ネットワーク名" -> netNames.add(jpVal);
@@ -167,16 +238,22 @@ public class WhoisParser {
                 }
 
                 switch (key) {
-                    case "cidr", "route", "route6" -> {
+                    case "route", "route6" -> {
                         NetworkCandidate cand = parseExplicitCidrValue(val, candidateOrder++);
                         if (cand != null) {
-                            candidates.add(cand);
+                            routeCandidates.add(cand);
+                        }
+                    }
+                    case "cidr" -> {
+                        NetworkCandidate cand = parseExplicitCidrValue(val, candidateOrder++);
+                        if (cand != null) {
+                            inetnumCandidates.add(cand);
                         }
                     }
                     case "inetnum", "inet6num", "netrange" -> {
                         NetworkCandidate cand = parseNetworkValue(val, candidateOrder++);
                         if (cand != null) {
-                            candidates.add(cand);
+                            inetnumCandidates.add(cand);
                         }
                     }
                     case "country" -> {
@@ -208,16 +285,28 @@ public class WhoisParser {
             }
         }
 
-        // 検索対象IPを包含する最も具体的な（プレフィックス長が最大の）ネットワーク候補を選択
-        NetworkCandidate selectedCandidate = selectBestCandidate(candidates, targetAddress);
+        // inetnum系（割り当て範囲）と route系（BGP経路情報）のそれぞれで最も具体的な候補を選択
+        NetworkCandidate bestInetnum = selectBestCandidate(inetnumCandidates, targetAddress);
+        NetworkCandidate bestRoute = selectBestCandidate(routeCandidates, targetAddress);
+
+        Cidr inetnumCidr = bestInetnum != null ? bestInetnum.resolvePrimaryBlock(targetAddress).toCidr() : null;
+        String inetnumIpRange = bestInetnum != null ? bestInetnum.ipRange() : "";
+
+        Cidr routeCidr = bestRoute != null ? bestRoute.resolvePrimaryBlock(targetAddress).toCidr() : null;
+        String routeIpRange = bestRoute != null ? bestRoute.ipRange() : "";
+
+        // 指定された優先モード（デフォルトはINETNUM）に従って採用候補を決定（片方が存在しない場合はもう片方にフォールバック）
+        NetworkCandidate selectedCandidate = (effectiveSource == CidrSource.ROUTE)
+                ? (bestRoute != null ? bestRoute : bestInetnum)
+                : (bestInetnum != null ? bestInetnum : bestRoute);
+
         List<CidrBlock> finalBlocks;
         CidrBlock primaryBlock;
         String ipRange;
 
         if (selectedCandidate != null) {
             finalBlocks = selectedCandidate.blocks();
-            CidrBlock matched = selectedCandidate.findMatchingBlock(targetAddress);
-            primaryBlock = matched != null ? matched : finalBlocks.getFirst();
+            primaryBlock = selectedCandidate.resolvePrimaryBlock(targetAddress);
             ipRange = selectedCandidate.ipRange();
         } else {
             // 万一whois出力から有効なCIDRも範囲も検出できなかった場合は単一ホストCIDR (/32 または /128) にフォールバック
@@ -235,6 +324,10 @@ public class WhoisParser {
                 primaryBlock.toCidr(),
                 allCidrs,
                 ipRange,
+                inetnumCidr,
+                routeCidr,
+                inetnumIpRange,
+                routeIpRange,
                 List.of(queriedIp.trim()),
                 country,
                 registrant,
@@ -378,4 +471,3 @@ public class WhoisParser {
                 || upper.contains("INTERNET ASSIGNED NUMBERS AUTHORITY");
     }
 }
-

@@ -6,6 +6,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -67,6 +68,10 @@ class ModelTest {
         assertEquals(primary, withNulls.getCidr());
         assertEquals(List.of(primary), withNulls.getAllCidrs());
         assertEquals("", withNulls.getIpRange());
+        assertNull(withNulls.getInetnumCidr());
+        assertNull(withNulls.getRouteCidr());
+        assertEquals("", withNulls.getInetnumIpRange());
+        assertEquals("", withNulls.getRouteIpRange());
         assertTrue(withNulls.getMatchedIpAddresses().isEmpty());
         assertEquals("", withNulls.getCountry());
         assertEquals("", withNulls.getRegistrant());
@@ -76,6 +81,28 @@ class ModelTest {
         assertTrue(withNulls.getTechContacts().isEmpty());
         assertTrue(withNulls.getAbuseContacts().isEmpty());
         assertEquals("", withNulls.getRawWhoisOutput());
+
+        WhoisCidrInfo with16ArgsNullRanges = new WhoisCidrInfo(
+                primary,
+                null,
+                null,
+                new Cidr("192.0.2.0", 23),
+                new Cidr("192.0.2.0", 24),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+        assertEquals(new Cidr("192.0.2.0", 23), with16ArgsNullRanges.getInetnumCidr());
+        assertEquals(new Cidr("192.0.2.0", 24), with16ArgsNullRanges.getRouteCidr());
+        assertEquals("", with16ArgsNullRanges.getInetnumIpRange());
+        assertEquals("", with16ArgsNullRanges.getRouteIpRange());
 
         WhoisCidrInfo withEmptyAllCidrs = new WhoisCidrInfo(
                 primary,
@@ -127,6 +154,18 @@ class ModelTest {
         assertNotEquals(same, new WhoisCidrInfo(primary, List.of(new Cidr("192.0.2.0", 25)), "192.0.2.0 - 192.0.2.255",
                 List.of("192.0.2.1", "192.0.2.2"), "JP", "Org", "NET", List.of("Desc"), List.of("Admin"), List.of("Tech"), List.of("abuse@example.com"), "raw"));
         assertNotEquals(same, new WhoisCidrInfo(primary, List.of(primary), "diff-range",
+                List.of("192.0.2.1", "192.0.2.2"), "JP", "Org", "NET", List.of("Desc"), List.of("Admin"), List.of("Tech"), List.of("abuse@example.com"), "raw"));
+        assertNotEquals(same, new WhoisCidrInfo(primary, List.of(primary), "192.0.2.0 - 192.0.2.255",
+                new Cidr("192.0.2.0", 23), null, "", "",
+                List.of("192.0.2.1", "192.0.2.2"), "JP", "Org", "NET", List.of("Desc"), List.of("Admin"), List.of("Tech"), List.of("abuse@example.com"), "raw"));
+        assertNotEquals(same, new WhoisCidrInfo(primary, List.of(primary), "192.0.2.0 - 192.0.2.255",
+                null, new Cidr("192.0.2.0", 24), "", "",
+                List.of("192.0.2.1", "192.0.2.2"), "JP", "Org", "NET", List.of("Desc"), List.of("Admin"), List.of("Tech"), List.of("abuse@example.com"), "raw"));
+        assertNotEquals(same, new WhoisCidrInfo(primary, List.of(primary), "192.0.2.0 - 192.0.2.255",
+                null, null, "192.0.2.0 - 192.0.3.255", "",
+                List.of("192.0.2.1", "192.0.2.2"), "JP", "Org", "NET", List.of("Desc"), List.of("Admin"), List.of("Tech"), List.of("abuse@example.com"), "raw"));
+        assertNotEquals(same, new WhoisCidrInfo(primary, List.of(primary), "192.0.2.0 - 192.0.2.255",
+                null, null, "", "192.0.2.0 - 192.0.2.255",
                 List.of("192.0.2.1", "192.0.2.2"), "JP", "Org", "NET", List.of("Desc"), List.of("Admin"), List.of("Tech"), List.of("abuse@example.com"), "raw"));
         assertNotEquals(same, new WhoisCidrInfo(primary, List.of(primary), "192.0.2.0 - 192.0.2.255",
                 List.of("192.0.2.99"), "JP", "Org", "NET", List.of("Desc"), List.of("Admin"), List.of("Tech"), List.of("abuse@example.com"), "raw"));

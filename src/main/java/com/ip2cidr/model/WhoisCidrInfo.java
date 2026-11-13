@@ -16,6 +16,10 @@ public class WhoisCidrInfo {
     private final Cidr cidr;
     private final List<Cidr> allCidrs;
     private final String ipRange;
+    private final Cidr inetnumCidr;
+    private final Cidr routeCidr;
+    private final String inetnumIpRange;
+    private final String routeIpRange;
     private final Set<String> matchedIpAddresses;
     private final String country;
     private final String registrant;
@@ -39,11 +43,51 @@ public class WhoisCidrInfo {
             List<String> techContacts,
             List<String> abuseContacts,
             String rawWhoisOutput) {
+        this(
+                cidr,
+                allCidrs,
+                ipRange,
+                null,
+                null,
+                "",
+                "",
+                matchedIpAddresses,
+                country,
+                registrant,
+                netName,
+                descriptions,
+                adminContacts,
+                techContacts,
+                abuseContacts,
+                rawWhoisOutput);
+    }
+
+    public WhoisCidrInfo(
+            Cidr cidr,
+            List<Cidr> allCidrs,
+            String ipRange,
+            Cidr inetnumCidr,
+            Cidr routeCidr,
+            String inetnumIpRange,
+            String routeIpRange,
+            List<String> matchedIpAddresses,
+            String country,
+            String registrant,
+            String netName,
+            List<String> descriptions,
+            List<String> adminContacts,
+            List<String> techContacts,
+            List<String> abuseContacts,
+            String rawWhoisOutput) {
         this.cidr = Objects.requireNonNull(cidr, "cidr must not be null");
         this.allCidrs = allCidrs == null || allCidrs.isEmpty()
                 ? List.of(cidr)
                 : Collections.unmodifiableList(new ArrayList<>(new LinkedHashSet<>(allCidrs)));
         this.ipRange = ipRange != null ? ipRange : "";
+        this.inetnumCidr = inetnumCidr;
+        this.routeCidr = routeCidr;
+        this.inetnumIpRange = inetnumIpRange != null ? inetnumIpRange : "";
+        this.routeIpRange = routeIpRange != null ? routeIpRange : "";
         this.matchedIpAddresses = new LinkedHashSet<>();
         if (matchedIpAddresses != null) {
             this.matchedIpAddresses.addAll(matchedIpAddresses);
@@ -96,6 +140,34 @@ public class WhoisCidrInfo {
      */
     public String getIpRange() {
         return ipRange;
+    }
+
+    /**
+     * 参考資料としての inetnum（割り当て範囲）由来のCIDRを返します（存在しない場合は {@code null}）。
+     */
+    public Cidr getInetnumCidr() {
+        return inetnumCidr;
+    }
+
+    /**
+     * 参考資料としての route（BGP経路情報）由来のCIDRを返します（存在しない場合は {@code null}）。
+     */
+    public Cidr getRouteCidr() {
+        return routeCidr;
+    }
+
+    /**
+     * 参考資料としての inetnum（割り当て範囲）由来のIPアドレス範囲表記を返します（存在しない場合は空文字列）。
+     */
+    public String getInetnumIpRange() {
+        return inetnumIpRange;
+    }
+
+    /**
+     * 参考資料としての route（BGP経路情報）由来のIPアドレス範囲表記を返します（存在しない場合は空文字列）。
+     */
+    public String getRouteIpRange() {
+        return routeIpRange;
     }
 
     /**
@@ -168,6 +240,10 @@ public class WhoisCidrInfo {
         return Objects.equals(cidr, that.cidr)
                 && Objects.equals(allCidrs, that.allCidrs)
                 && Objects.equals(ipRange, that.ipRange)
+                && Objects.equals(inetnumCidr, that.inetnumCidr)
+                && Objects.equals(routeCidr, that.routeCidr)
+                && Objects.equals(inetnumIpRange, that.inetnumIpRange)
+                && Objects.equals(routeIpRange, that.routeIpRange)
                 && Objects.equals(matchedIpAddresses, that.matchedIpAddresses)
                 && Objects.equals(country, that.country)
                 && Objects.equals(registrant, that.registrant)
@@ -185,6 +261,10 @@ public class WhoisCidrInfo {
                 cidr,
                 allCidrs,
                 ipRange,
+                inetnumCidr,
+                routeCidr,
+                inetnumIpRange,
+                routeIpRange,
                 matchedIpAddresses,
                 country,
                 registrant,
@@ -202,6 +282,10 @@ public class WhoisCidrInfo {
                 "cidr=" + cidr +
                 ", allCidrs=" + allCidrs +
                 ", ipRange='" + ipRange + '\'' +
+                ", inetnumCidr=" + inetnumCidr +
+                ", routeCidr=" + routeCidr +
+                ", inetnumIpRange='" + inetnumIpRange + '\'' +
+                ", routeIpRange='" + routeIpRange + '\'' +
                 ", matchedIpAddresses=" + matchedIpAddresses +
                 ", country='" + country + '\'' +
                 ", registrant='" + registrant + '\'' +
