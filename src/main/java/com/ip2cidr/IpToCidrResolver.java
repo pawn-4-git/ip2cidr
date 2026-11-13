@@ -93,19 +93,18 @@ public class IpToCidrResolver {
         this(WhoisParser.CidrSource.INETNUM);
     }
 
-     * 
-     * /**
-     * 用するCI
-     * 
-     * idrResolver(WhoisParser.Cidr
-     * 
-     * new CommandWhoisExecutor(),
-     * new WhoisParser(cidrSource),
-     * DEFAULT_RATE_LIMIT_INTERVAL,
-     * DEFAULT_CACHE_HIT_INTERVAL,
-     *  
-     * 
-     *             duration -> Thread.sleep(duration.toMillis()));
+    /**
+     * 採用するCIDR情報源（{@link WhoisParser.CidrSource#INETNUM} または {@link WhoisParser.CidrSource#ROUTE}）を指定してリゾルバを生成します。
+     */
+    public IpToCidrResolver(WhoisParser.CidrSource cidrSource) {
+        this(
+                new CommandWhoisExecutor(),
+                new WhoisParser(cidrSource),
+                DEFAULT_RATE_LIMIT_INTERVAL,
+                DEFAULT_CACHE_HIT_INTERVAL,
+                DEFAULT_RATE_LIMIT_COOLDOWN,
+                DEFAULT_MAX_RATE_LIMIT_RETRIES,
+                duration -> Thread.sleep(duration.toMillis()));
     }
 
     /**

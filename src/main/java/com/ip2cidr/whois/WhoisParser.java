@@ -57,6 +57,7 @@ public class WhoisParser {
         /**
          * route / route6（BGP経路情報）を優先して採用。存在しない場合は inetnum 系にフォールバック。
          */
+        ROUTE;
 
         public static CidrSource fromString(String value) {
             if (value == null || value.isBlank()) {
