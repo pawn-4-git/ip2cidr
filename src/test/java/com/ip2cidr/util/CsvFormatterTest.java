@@ -43,8 +43,10 @@ class CsvFormatterTest {
         assertEquals(2, cidrLines.length);
         assertTrue(cidrLines[0].startsWith(
                 "CIDR,NetworkIP,PrefixLength,AllCIDRs,IPRange,CIDR(inetnum),CIDR(route),IP Range(inetnum),IP Range(route),MatchedIPs,"));
+        assertTrue(cidrLines[0].endsWith(",AbuseContacts,Success"));
         assertTrue(cidrLines[1].startsWith(
                 "8.8.8.0/24,8.8.8.0,24,8.8.8.0/24,8.8.8.0 - 8.8.8.255,8.8.8.0/23,8.8.8.0/24,8.8.8.0 - 8.8.9.255,8.8.8.0 - 8.8.8.255,8.8.8.8; 8.8.8.4,US,\"Google, LLC\",GOGL,"));
+        assertTrue(cidrLines[1].endsWith(",network-abuse@google.com,true"));
 
         // IP単位モード（1行につき1つのIPアドレスとして2行出力される）
         String ipCsv = CsvFormatter.format(List.of(info), OutputMode.IP, false);
@@ -52,10 +54,25 @@ class CsvFormatterTest {
         assertEquals(3, ipLines.length);
         assertTrue(ipLines[0].startsWith(
                 "IPAddress,CIDR,NetworkIP,PrefixLength,AllCIDRs,IPRange,CIDR(inetnum),CIDR(route),IP Range(inetnum),IP Range(route),Country,"));
+        assertTrue(ipLines[0].endsWith(",AbuseContacts,Success"));
         assertTrue(ipLines[1].startsWith(
                 "8.8.8.8,8.8.8.0/24,8.8.8.0,24,8.8.8.0/24,8.8.8.0 - 8.8.8.255,8.8.8.0/23,8.8.8.0/24,8.8.8.0 - 8.8.9.255,8.8.8.0 - 8.8.8.255,US,"));
+        assertTrue(ipLines[1].endsWith(",network-abuse@google.com,true"));
         assertTrue(ipLines[2].startsWith(
                 "8.8.8.4,8.8.8.0/24,8.8.8.0,24,8.8.8.0/24,8.8.8.0 - 8.8.8.255,8.8.8.0/23,8.8.8.0/24,8.8.8.0 - 8.8.9.255,8.8.8.0 - 8.8.8.255,US,"));
+        assertTrue(ipLines[2].endsWith(",network-abuse@google.com,true"));
+
+        // 失敗エントリ（CIDRがnull、Success=false）のCIDR単位・IP単位出力
+        WhoisCidrInfo failedInfo = WhoisCidrInfo.failed("203.0.113.9");
+        String failedCidrCsv = CsvFormatter.format(List.of(info, failedInfo), OutputMode.CIDR, false);
+        String[] failedCidrLines = failedCidrCsv.trim().split("\\R");
+        assertEquals(3, failedCidrLines.length);
+        assertEquals(",,,,,,,,,203.0.113.9,,,,,,,,false", failedCidrLines[2]);
+
+        String failedIpCsv = CsvFormatter.format(List.of(info, failedInfo), OutputMode.IP, false);
+        String[] failedIpLines = failedIpCsv.trim().split("\\R");
+        assertEquals(4, failedIpLines.length);
+        assertEquals("203.0.113.9,,,,,,,,,,,,,,,,,false", failedIpLines[3]);
     }
 
     @Test

@@ -137,6 +137,8 @@ class MainTest {
                 List.of(),
                 "RAW_WHOIS_2");
 
+        WhoisCidrInfo failedInfo = WhoisCidrInfo.failed("203.0.113.99");
+
         Method printByCidr = Main.class.getDeclaredMethod("printTextByCidr", List.class, boolean.class);
         printByCidr.setAccessible(true);
 
@@ -147,13 +149,15 @@ class MainTest {
         ByteArrayOutputStream capturedOut = new ByteArrayOutputStream();
         try {
             System.setOut(new PrintStream(capturedOut, true, StandardCharsets.UTF_8));
-            printByCidr.invoke(null, List.of(info1, info2), true);
-            printByIp.invoke(null, List.of(info1, info2), false);
+            printByCidr.invoke(null, List.of(info1, info2, failedInfo), true);
+            printByIp.invoke(null, List.of(info1, info2, failedInfo), false);
         } finally {
             System.setOut(originalOut);
         }
 
         String out = capturedOut.toString(StandardCharsets.UTF_8);
+        assertTrue(out.contains("Success         : true"));
+        assertTrue(out.contains("Success         : false"));
         assertTrue(out.contains("CIDR            : 192.0.2.0/24"));
         assertTrue(out.contains("All CIDRs       : 192.0.2.0/25, 192.0.2.128/25"));
         assertTrue(out.contains("CIDR(inetnum)   : 192.0.2.0/23"));
@@ -161,6 +165,7 @@ class MainTest {
         assertTrue(out.contains("IP Range(inetnum): 192.0.2.0 - 192.0.3.255"));
         assertTrue(out.contains("IP Range(route) : 192.0.2.0 - 192.0.2.255"));
         assertTrue(out.contains("Matched IPs     : 192.0.2.1, 192.0.2.2"));
+        assertTrue(out.contains("Matched IPs     : 203.0.113.99"));
         assertTrue(out.contains("Descriptions    : Desc A | Desc B"));
         assertTrue(out.contains("Admin Contacts  : ADM-1"));
         assertTrue(out.contains("Tech Contacts   : TECH-1"));
@@ -169,6 +174,7 @@ class MainTest {
         assertTrue(out.contains("RAW_WHOIS_1"));
         assertTrue(out.contains("IP Address      : 192.0.2.1"));
         assertTrue(out.contains("IP Address      : 198.51.100.1"));
+        assertTrue(out.contains("IP Address      : 203.0.113.99"));
     }
 }
 

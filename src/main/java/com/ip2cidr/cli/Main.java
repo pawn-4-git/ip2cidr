@@ -156,6 +156,7 @@ public class Main {
             if (i > 0) {
                 System.out.println("------------------------------------------------------------");
             }
+            System.out.println("Success         : " + info.isSuccess());
             printCidrAndRangeDetails(info);
             System.out.println("Matched IPs     : " + String.join(", ", info.getMatchedIpAddresses()));
             printCommonDetails(info, showRaw);
@@ -171,6 +172,7 @@ public class Main {
                 }
                 first = false;
                 System.out.println("IP Address      : " + ip);
+                System.out.println("Success         : " + info.isSuccess());
                 printCidrAndRangeDetails(info);
                 printCommonDetails(info, showRaw);
             }
@@ -178,7 +180,7 @@ public class Main {
     }
 
     private static void printCidrAndRangeDetails(WhoisCidrInfo info) {
-        System.out.println("CIDR            : " + info.getCidr());
+        System.out.println("CIDR            : " + (info.getCidr() != null ? info.getCidr() : ""));
         if (info.getAllCidrs().size() > 1) {
             String allCidrsStr = info.getAllCidrs().stream()
                     .map(Cidr::toString)

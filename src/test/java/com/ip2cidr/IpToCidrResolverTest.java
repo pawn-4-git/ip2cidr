@@ -18,7 +18,9 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -275,7 +277,7 @@ class IpToCidrResolverTest {
 
         @Test
         void testRetryExhaustionOnRateLimitAndWhoisException() {
-                // 1. レートリミット応答がリトライ上限を超えて継続する場合
+                // 1. レートリミット応答がリトライ上限を超えて継続する場合 -> 例外を投げず失敗エントリを返し、未解決IPをログ出力すること
                 IpToCidrResolver rateLimitedResolver = new IpToCidrResolver(
                                 ip -> "% Query rate limit exceeded",
                                 new WhoisParser(),
@@ -286,10 +288,24 @@ class IpToCidrResolverTest {
                                 d -> {
                                 });
 
-                WhoisException rateLimitEx = assertThrows(
-                                WhoisException.class,
-                                () -> rateLimitedResolver.resolve("192.0.2.1"));
-                assertTrue(rateLimitEx.getMessage().contains("Rate limit persisted after 2 retries"));
+                PrintStream originalOut = System.out;
+                ByteArrayOutputStream capturedOut = new ByteArrayOutputStream();
+                List<WhoisCidrInfo> rateLimitedResults;
+                try {
+                        System.setOut(new PrintStream(capturedOut, true, StandardCharsets.UTF_8));
+                        rateLimitedResults = rateLimitedResolver.resolve("192.0.2.1");
+                } finally {
+                        System.setOut(originalOut);
+                }
+                String stdout = capturedOut.toString(StandardCharsets.UTF_8);
+
+                assertEquals(1, rateLimitedResults.size());
+                assertFalse(rateLimitedResults.getFirst().isSuccess());
+                assertNull(rateLimitedResults.getFirst().getCidr());
+                assertEquals(List.of("192.0.2.1"), rateLimitedResults.getFirst().getMatchedIpAddresses());
+                assertTrue(rateLimitedResolver.getCachedResults().isEmpty());
+                assertTrue(stdout.contains("Rate limit persisted after 2 retries"));
+                assertTrue(stdout.contains("[WHOIS] [WARN] Unresolved IP address(es) (1): 192.0.2.1"));
 
                 // 2. WhoisException が1回目に発生し、2回目で成功する場合
                 int[] count = { 0 };
@@ -309,9 +325,10 @@ class IpToCidrResolverTest {
                                 });
                 List<WhoisCidrInfo> recovered = recoveringResolver.resolve("192.0.2.1");
                 assertEquals(1, recovered.size());
+                assertTrue(recovered.getFirst().isSuccess());
                 assertEquals("Recovered Org", recovered.getFirst().getRegistrant());
 
-                // 3. WhoisException がリトライ上限を超えて発生し続ける場合
+                // 3. WhoisException がリトライ上限を超えて発生し続ける場合 -> 例外を投げず失敗エントリを返すこと
                 IpToCidrResolver failingResolver = new IpToCidrResolver(
                                 ip -> {
                                         throw new WhoisException("Persistent failure");
@@ -323,10 +340,79 @@ class IpToCidrResolverTest {
                                 1,
                                 d -> {
                                 });
-                WhoisException failEx = assertThrows(
-                                WhoisException.class,
-                                () -> failingResolver.resolve("192.0.2.1"));
-                assertEquals("Persistent failure", failEx.getMessage());
+                List<WhoisCidrInfo> failedResults = failingResolver.resolve("192.0.2.1");
+                assertEquals(1, failedResults.size());
+                assertFalse(failedResults.getFirst().isSuccess());
+                assertNull(failedResults.getFirst().getCidr());
+                assertEquals(List.of("192.0.2.1"), failedResults.getFirst().getMatchedIpAddresses());
+        }
+
+        @Test
+        void testPartialResolutionOnRateLimitReturnsResolvedAndFailedEntriesAndLogsUnresolvedIps() {
+                List<String> executedQueries = new ArrayList<>();
+                WhoisExecutor mockExecutor = ip -> {
+                        executedQueries.add(ip);
+                        if (ip.startsWith("192.0.2.")) {
+                                return """
+                                                CIDR: 192.0.2.0/24
+                                                NetName: TEST-NET-1
+                                                OrgName: Example Org 1
+                                                Country: JP
+                                                """;
+                        }
+                        return "% Query rate limit exceeded";
+                };
+
+                IpToCidrResolver resolver = new IpToCidrResolver(
+                                mockExecutor,
+                                new WhoisParser(),
+                                Duration.ZERO,
+                                Duration.ZERO,
+                                Duration.ofMillis(1),
+                                1,
+                                d -> {
+                                });
+
+                PrintStream originalOut = System.out;
+                ByteArrayOutputStream capturedOut = new ByteArrayOutputStream();
+                List<WhoisCidrInfo> results;
+                try {
+                        System.setOut(new PrintStream(capturedOut, true, StandardCharsets.UTF_8));
+                        results = resolver.resolve("203.0.113.5", "192.0.2.1", "198.51.100.10", "192.0.2.50");
+                } finally {
+                        System.setOut(originalOut);
+                }
+                String stdout = capturedOut.toString(StandardCharsets.UTF_8);
+
+                // 192.0.2.1(成功), 192.0.2.50(キャッシュヒット) -> 198.51.100.10(レートリミット失敗) -> 203.0.113.5(未実行)
+                assertEquals(List.of("192.0.2.1", "198.51.100.10", "198.51.100.10"), executedQueries);
+                assertEquals(3, results.size());
+
+                // 1件目: 解決済みのCIDR（成功フラグ true）
+                WhoisCidrInfo resolved = results.get(0);
+                assertTrue(resolved.isSuccess());
+                assertEquals(new Cidr("192.0.2.0", 24), resolved.getCidr());
+                assertEquals(List.of("192.0.2.1", "192.0.2.50"), resolved.getMatchedIpAddresses());
+
+                // 2件目・3件目: 未解決のIPアドレス（成功フラグ false）
+                WhoisCidrInfo failed1 = results.get(1);
+                assertFalse(failed1.isSuccess());
+                assertNull(failed1.getCidr());
+                assertEquals(List.of("198.51.100.10"), failed1.getMatchedIpAddresses());
+
+                WhoisCidrInfo failed2 = results.get(2);
+                assertFalse(failed2.isSuccess());
+                assertNull(failed2.getCidr());
+                assertEquals(List.of("203.0.113.5"), failed2.getMatchedIpAddresses());
+
+                // キャッシュには成功分のみ登録されていること
+                assertEquals(1, resolver.getCachedResults().size());
+
+                // 未解決IPアドレスがログ出力されていること
+                assertTrue(stdout.contains("[WHOIS] [ERROR] Failed to resolve IP 198.51.100.10"));
+                assertTrue(stdout.contains("[WHOIS] [WARN] Unresolved IP address(es) (2): 198.51.100.10, 203.0.113.5"));
+                assertTrue(stdout.contains(
+                                "[WHOIS] Completed resolution with errors: 2/4 IP address(es) resolved into 1 CIDR block(s), 2 IP address(es) unresolved."));
         }
 
         @Test

@@ -91,7 +91,7 @@ public final class CsvFormatter {
     }
 
     private static void appendCidrModeHeader(StringBuilder sb, boolean showRaw) {
-        sb.append("CIDR,NetworkIP,PrefixLength,AllCIDRs,IPRange,CIDR(inetnum),CIDR(route),IP Range(inetnum),IP Range(route),MatchedIPs,Country,Registrant,NetName,Descriptions,AdminContacts,TechContacts,AbuseContacts");
+        sb.append("CIDR,NetworkIP,PrefixLength,AllCIDRs,IPRange,CIDR(inetnum),CIDR(route),IP Range(inetnum),IP Range(route),MatchedIPs,Country,Registrant,NetName,Descriptions,AdminContacts,TechContacts,AbuseContacts,Success");
         if (showRaw) {
             sb.append(",RawWhoisOutput");
         }
@@ -99,7 +99,7 @@ public final class CsvFormatter {
     }
 
     private static void appendIpModeHeader(StringBuilder sb, boolean showRaw) {
-        sb.append("IPAddress,CIDR,NetworkIP,PrefixLength,AllCIDRs,IPRange,CIDR(inetnum),CIDR(route),IP Range(inetnum),IP Range(route),Country,Registrant,NetName,Descriptions,AdminContacts,TechContacts,AbuseContacts");
+        sb.append("IPAddress,CIDR,NetworkIP,PrefixLength,AllCIDRs,IPRange,CIDR(inetnum),CIDR(route),IP Range(inetnum),IP Range(route),Country,Registrant,NetName,Descriptions,AdminContacts,TechContacts,AbuseContacts,Success");
         if (showRaw) {
             sb.append(",RawWhoisOutput");
         }
@@ -108,6 +108,9 @@ public final class CsvFormatter {
 
     private static void appendCidrModeRow(StringBuilder sb, WhoisCidrInfo info, boolean showRaw) {
         Cidr cidr = info.getCidr();
+        String cidrStr = cidr != null ? cidr.toString() : "";
+        String networkIp = cidr != null ? cidr.getIpAddress() : "";
+        String prefixLen = cidr != null ? String.valueOf(cidr.getPrefixLength()) : "";
         String allCidrs = info.getAllCidrs().stream()
                 .map(Cidr::toString)
                 .collect(Collectors.joining("; "));
@@ -115,9 +118,9 @@ public final class CsvFormatter {
         String inetnumCidr = info.getInetnumCidr() != null ? info.getInetnumCidr().toString() : "";
         String routeCidr = info.getRouteCidr() != null ? info.getRouteCidr().toString() : "";
 
-        sb.append(escapeCsv(cidr.toString())).append(',')
-                .append(escapeCsv(cidr.getIpAddress())).append(',')
-                .append(cidr.getPrefixLength()).append(',')
+        sb.append(escapeCsv(cidrStr)).append(',')
+                .append(escapeCsv(networkIp)).append(',')
+                .append(prefixLen).append(',')
                 .append(escapeCsv(allCidrs)).append(',')
                 .append(escapeCsv(info.getIpRange())).append(',')
                 .append(escapeCsv(inetnumCidr)).append(',')
@@ -131,7 +134,8 @@ public final class CsvFormatter {
                 .append(escapeCsv(String.join(" | ", info.getDescriptions()))).append(',')
                 .append(escapeCsv(String.join("; ", info.getAdminContacts()))).append(',')
                 .append(escapeCsv(String.join("; ", info.getTechContacts()))).append(',')
-                .append(escapeCsv(String.join("; ", info.getAbuseContacts())));
+                .append(escapeCsv(String.join("; ", info.getAbuseContacts()))).append(',')
+                .append(info.isSuccess());
 
         if (showRaw) {
             sb.append(',').append(escapeCsv(info.getRawWhoisOutput()));
@@ -141,6 +145,9 @@ public final class CsvFormatter {
 
     private static void appendIpModeRow(StringBuilder sb, String ip, WhoisCidrInfo info, boolean showRaw) {
         Cidr cidr = info.getCidr();
+        String cidrStr = cidr != null ? cidr.toString() : "";
+        String networkIp = cidr != null ? cidr.getIpAddress() : "";
+        String prefixLen = cidr != null ? String.valueOf(cidr.getPrefixLength()) : "";
         String allCidrs = info.getAllCidrs().stream()
                 .map(Cidr::toString)
                 .collect(Collectors.joining("; "));
@@ -148,9 +155,9 @@ public final class CsvFormatter {
         String routeCidr = info.getRouteCidr() != null ? info.getRouteCidr().toString() : "";
 
         sb.append(escapeCsv(ip)).append(',')
-                .append(escapeCsv(cidr.toString())).append(',')
-                .append(escapeCsv(cidr.getIpAddress())).append(',')
-                .append(cidr.getPrefixLength()).append(',')
+                .append(escapeCsv(cidrStr)).append(',')
+                .append(escapeCsv(networkIp)).append(',')
+                .append(prefixLen).append(',')
                 .append(escapeCsv(allCidrs)).append(',')
                 .append(escapeCsv(info.getIpRange())).append(',')
                 .append(escapeCsv(inetnumCidr)).append(',')
@@ -163,7 +170,8 @@ public final class CsvFormatter {
                 .append(escapeCsv(String.join(" | ", info.getDescriptions()))).append(',')
                 .append(escapeCsv(String.join("; ", info.getAdminContacts()))).append(',')
                 .append(escapeCsv(String.join("; ", info.getTechContacts()))).append(',')
-                .append(escapeCsv(String.join("; ", info.getAbuseContacts())));
+                .append(escapeCsv(String.join("; ", info.getAbuseContacts()))).append(',')
+                .append(info.isSuccess());
 
         if (showRaw) {
             sb.append(',').append(escapeCsv(info.getRawWhoisOutput()));

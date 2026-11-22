@@ -233,6 +233,7 @@ public class IpToCidrResolver {
         sortedInputs.sort(null);
 
         Map<Cidr, WhoisCidrInfo> batchResults = new LinkedHashMap<>();
+        List<String> unresolvedIps = new ArrayList<>();
         CachedEntry lastResolvedEntry = null;
         int total = sortedInputs.size();
 
@@ -267,7 +268,22 @@ public class IpToCidrResolver {
             }
 
             // 2. 未検出のIPアドレスの場合はレートリミット（通常5秒間隔、制限検知時は1分待機リトライ）を適用してwhoisを実行
-            String rawWhois = executeWhoisWithRetry(ip, current, total);
+            String rawWhois;
+            try {
+                rawWhois = executeWhoisWithRetry(ip, current, total);
+            } catch (WhoisException e) {
+                if (Thread.currentThread().isInterrupted()) {
+                    throw e;
+                }
+                logStatus(
+                        "[WHOIS] [ERROR] Failed to resolve IP %s (%s). Aborting remaining WHOIS queries and returning partial results.",
+                        ip,
+                        e.getMessage());
+                for (int j = i; j < total; j++) {
+                    unresolvedIps.add(sortedInputs.get(j).rawIp());
+                }
+                break;
+            }
 
             WhoisParser.ParsedResult parsedResult = whoisParser.parseWithBlocks(ip, rawWhois);
             WhoisCidrInfo newInfo = parsedResult.info();
@@ -299,12 +315,30 @@ public class IpToCidrResolver {
             }
         }
 
-        logStatus(
-                "[WHOIS] Completed resolution: %d IP address(es) aggregated into %d CIDR block(s).",
-                total,
-                batchResults.size());
+        List<WhoisCidrInfo> finalResults = new ArrayList<>(batchResults.values());
+        if (!unresolvedIps.isEmpty()) {
+            for (String unresolvedIp : unresolvedIps) {
+                finalResults.add(WhoisCidrInfo.failed(unresolvedIp));
+            }
+            logStatus(
+                    "[WHOIS] [WARN] Unresolved IP address(es) (%d): %s",
+                    unresolvedIps.size(),
+                    String.join(", ", unresolvedIps));
+            int resolvedIpCount = total - unresolvedIps.size();
+            logStatus(
+                    "[WHOIS] Completed resolution with errors: %d/%d IP address(es) resolved into %d CIDR block(s), %d IP address(es) unresolved.",
+                    resolvedIpCount,
+                    total,
+                    batchResults.size(),
+                    unresolvedIps.size());
+        } else {
+            logStatus(
+                    "[WHOIS] Completed resolution: %d IP address(es) aggregated into %d CIDR block(s).",
+                    total,
+                    batchResults.size());
+        }
 
-        return new ArrayList<>(batchResults.values());
+        return finalResults;
     }
 
     /**
