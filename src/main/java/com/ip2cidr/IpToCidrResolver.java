@@ -42,11 +42,10 @@ public class IpToCidrResolver {
     public static final Duration DEFAULT_CACHE_HIT_INTERVAL = Duration.ofMillis(500);
 
     /**
-     * レートリミッ
-     *      */
-     * 
-     * 
-     * 
+     * レートリミット発生時の初回クールダウン待機時間（8分）。
+     */
+    public static final Duration DEFAULT_INITIAL_RATE_LIMIT_COOLDOWN = Duration.ofMinutes(8);
+
     /**
      * whoisサーバーからレートリミット（アクセス制限）を受けた際の2回目以降の基準クールダウン時間（1分）。
      */
@@ -133,7 +132,6 @@ public class IpToCidrResolver {
     }
 
     /**
-     * 
      * 採用するCIDR情報源（{@link WhoisParser.CidrSource#INETNUM} または {@link WhoisParser.CidrSource#ROUTE}）を指定してリゾルバを生成します。
      */
     public IpToCidrResolver(WhoisParser.CidrSource cidrSource) {
@@ -514,27 +512,25 @@ public class IpToCidrResolver {
                 if (attempt > maxRateLimitRetries) {
                     throw e;
                 }
-                Duration cooldo
-
-    n = calculateCooldownForAttempt(attempt, false);
+                Duration cooldown = calculateCooldownForAttempt(attempt, false);
                 logStatus(
                         "[WHOIS] [WARN] Query failed (%s) for IP %s. Waiting %d seconds before retry (%d/%d)...",
-             
-
-             }
+                        e.getMessage(), ip, cooldown.toSeconds(), attempt, maxRateLimitRetries);
+                sleepDuration(cooldown);
+            }
         }
     }
-        
-          private Duration calculateCool
-    i
 
-        return Duration.ZERO;
-    }
-    if (isRateLimit && attempt == 1) {
-        return initialRateLimitCoo}
-    
-         baseMillis = rateLimitCooldown.toMi
-    lint shift = Math.min(Math.max(attempt - 1, 0, 30);
+    private Duration calculateCooldownForAttempt(int attempt, boolean isRateLimit) {
+        if (rateLimitCooldown.isZero()) {
+            return Duration.ZERO;
+        }
+        if (isRateLimit && attempt == 1) {
+            return initialRateLimitCooldown;
+        }
+        long baseMillis = rateLimitCooldown.toMillis();
+        long maxMillis = Math.max(baseMillis, maxRateLimitCooldown.toMillis());
+        int shift = Math.min(Math.max(attempt - 1, 0), 30);
         long multiplier = 1L << shift;
         if (baseMillis > maxMillis / multiplier) {
             return Duration.ofMillis(maxMillis);
