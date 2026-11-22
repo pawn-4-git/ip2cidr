@@ -10,15 +10,21 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -154,9 +160,9 @@ class IpToCidrResolverTest {
                 String stdout = capturedOut.toString(StandardCharsets.UTF_8);
                 System.out.print(stdout);
 
-                // 1回目でレートリミットになり、1分（60秒）待機して2回目で成功すること
+                // 1回目でレートリミットになり、初回8分（480秒）待機して2回目で成功すること
                 assertEquals(2, attempts[0]);
-                assertEquals(List.of(Duration.ofMinutes(1)), sleepDurations);
+                assertEquals(List.of(Duration.ofMinutes(8)), sleepDurations);
                 assertEquals(1, results.size());
                 assertEquals(new Cidr("203.0.113.0", 24), results.getFirst().getCidr());
                 assertEquals("Retry Success Org", results.getFirst().getRegistrant());
@@ -164,7 +170,7 @@ class IpToCidrResolverTest {
                 assertTrue(stdout.contains("[WHOIS] Starting resolution for 1 IP address(es)"));
                 assertTrue(stdout.contains("[WHOIS] [1/1] Querying whois for 203.0.113.5..."));
                 assertTrue(stdout.contains(
-                                "[WHOIS] [WARN] Rate limit detected for IP 203.0.113.5. Waiting 60 seconds before retry (1/10)..."));
+                                "[WHOIS] [WARN] Rate limit detected for IP 203.0.113.5. Waiting 480 seconds before retry (1/10)..."));
                 assertTrue(stdout.contains("[WHOIS] [1/1] 203.0.113.5 -> Resolved CIDR: 203.0.113.0/24"));
                 assertTrue(stdout.contains("[WHOIS] Completed resolution:"));
         }
@@ -215,6 +221,21 @@ class IpToCidrResolverTest {
                 assertThrows(IllegalArgumentException.class, () -> new IpToCidrResolver(
                                 dummyExec, new WhoisParser(), Duration.ZERO, Duration.ZERO, Duration.ZERO, -1, d -> {
                                 }));
+                assertThrows(IllegalArgumentException.class, () -> new IpToCidrResolver(
+                                dummyExec, new WhoisParser(), Duration.ZERO, Duration.ZERO, Duration.ZERO, 1,
+                                Duration.ofSeconds(-1), Duration.ofSeconds(60), Duration.ofSeconds(5),
+                                d -> {
+                                }, Clock.systemUTC()));
+                assertThrows(IllegalArgumentException.class, () -> new IpToCidrResolver(
+                                dummyExec, new WhoisParser(), Duration.ZERO, Duration.ZERO, Duration.ZERO, 1,
+                                Duration.ofSeconds(1), Duration.ofSeconds(-1), Duration.ofSeconds(5),
+                                d -> {
+                                }, Clock.systemUTC()));
+                assertThrows(IllegalArgumentException.class, () -> new IpToCidrResolver(
+                                dummyExec, new WhoisParser(), Duration.ZERO, Duration.ZERO, Duration.ZERO, 1,
+                                Duration.ofSeconds(1), Duration.ofSeconds(60), Duration.ofSeconds(-1),
+                                d -> {
+                                }, Clock.systemUTC()));
         }
 
         @Test
@@ -275,7 +296,7 @@ class IpToCidrResolverTest {
 
         @Test
         void testRetryExhaustionOnRateLimitAndWhoisException() {
-                // 1. レートリミット応答がリトライ上限を超えて継続する場合
+                // 1. レートリミット応答がリトライ上限を超えて継続する場合 -> 例外を投げず失敗エントリを返し、未解決IPをログ出力すること
                 IpToCidrResolver rateLimitedResolver = new IpToCidrResolver(
                                 ip -> "% Query rate limit exceeded",
                                 new WhoisParser(),
@@ -286,10 +307,24 @@ class IpToCidrResolverTest {
                                 d -> {
                                 });
 
-                WhoisException rateLimitEx = assertThrows(
-                                WhoisException.class,
-                                () -> rateLimitedResolver.resolve("192.0.2.1"));
-                assertTrue(rateLimitEx.getMessage().contains("Rate limit persisted after 2 retries"));
+                PrintStream originalOut = System.out;
+                ByteArrayOutputStream capturedOut = new ByteArrayOutputStream();
+                List<WhoisCidrInfo> rateLimitedResults;
+                try {
+                        System.setOut(new PrintStream(capturedOut, true, StandardCharsets.UTF_8));
+                        rateLimitedResults = rateLimitedResolver.resolve("192.0.2.1");
+                } finally {
+                        System.setOut(originalOut);
+                }
+                String stdout = capturedOut.toString(StandardCharsets.UTF_8);
+
+                assertEquals(1, rateLimitedResults.size());
+                assertFalse(rateLimitedResults.getFirst().isSuccess());
+                assertNull(rateLimitedResults.getFirst().getCidr());
+                assertEquals(List.of("192.0.2.1"), rateLimitedResults.getFirst().getMatchedIpAddresses());
+                assertTrue(rateLimitedResolver.getCachedResults().isEmpty());
+                assertTrue(stdout.contains("Rate limit persisted after 2 retries"));
+                assertTrue(stdout.contains("[WHOIS] [WARN] Unresolved IP address(es) (1): 192.0.2.1"));
 
                 // 2. WhoisException が1回目に発生し、2回目で成功する場合
                 int[] count = { 0 };
@@ -309,9 +344,10 @@ class IpToCidrResolverTest {
                                 });
                 List<WhoisCidrInfo> recovered = recoveringResolver.resolve("192.0.2.1");
                 assertEquals(1, recovered.size());
+                assertTrue(recovered.getFirst().isSuccess());
                 assertEquals("Recovered Org", recovered.getFirst().getRegistrant());
 
-                // 3. WhoisException がリトライ上限を超えて発生し続ける場合
+                // 3. WhoisException がリトライ上限を超えて発生し続ける場合 -> 例外を投げず失敗エントリを返すこと
                 IpToCidrResolver failingResolver = new IpToCidrResolver(
                                 ip -> {
                                         throw new WhoisException("Persistent failure");
@@ -323,10 +359,79 @@ class IpToCidrResolverTest {
                                 1,
                                 d -> {
                                 });
-                WhoisException failEx = assertThrows(
-                                WhoisException.class,
-                                () -> failingResolver.resolve("192.0.2.1"));
-                assertEquals("Persistent failure", failEx.getMessage());
+                List<WhoisCidrInfo> failedResults = failingResolver.resolve("192.0.2.1");
+                assertEquals(1, failedResults.size());
+                assertFalse(failedResults.getFirst().isSuccess());
+                assertNull(failedResults.getFirst().getCidr());
+                assertEquals(List.of("192.0.2.1"), failedResults.getFirst().getMatchedIpAddresses());
+        }
+
+        @Test
+        void testPartialResolutionOnRateLimitReturnsResolvedAndFailedEntriesAndLogsUnresolvedIps() {
+                List<String> executedQueries = new ArrayList<>();
+                WhoisExecutor mockExecutor = ip -> {
+                        executedQueries.add(ip);
+                        if (ip.startsWith("192.0.2.")) {
+                                return """
+                                                CIDR: 192.0.2.0/24
+                                                NetName: TEST-NET-1
+                                                OrgName: Example Org 1
+                                                Country: JP
+                                                """;
+                        }
+                        return "% Query rate limit exceeded";
+                };
+
+                IpToCidrResolver resolver = new IpToCidrResolver(
+                                mockExecutor,
+                                new WhoisParser(),
+                                Duration.ZERO,
+                                Duration.ZERO,
+                                Duration.ofMillis(1),
+                                1,
+                                d -> {
+                                });
+
+                PrintStream originalOut = System.out;
+                ByteArrayOutputStream capturedOut = new ByteArrayOutputStream();
+                List<WhoisCidrInfo> results;
+                try {
+                        System.setOut(new PrintStream(capturedOut, true, StandardCharsets.UTF_8));
+                        results = resolver.resolve("203.0.113.5", "192.0.2.1", "198.51.100.10", "192.0.2.50");
+                } finally {
+                        System.setOut(originalOut);
+                }
+                String stdout = capturedOut.toString(StandardCharsets.UTF_8);
+
+                // 192.0.2.1(成功), 192.0.2.50(キャッシュヒット) -> 198.51.100.10(レートリミット失敗) -> 203.0.113.5(未実行)
+                assertEquals(List.of("192.0.2.1", "198.51.100.10", "198.51.100.10"), executedQueries);
+                assertEquals(3, results.size());
+
+                // 1件目: 解決済みのCIDR（成功フラグ true）
+                WhoisCidrInfo resolved = results.get(0);
+                assertTrue(resolved.isSuccess());
+                assertEquals(new Cidr("192.0.2.0", 24), resolved.getCidr());
+                assertEquals(List.of("192.0.2.1", "192.0.2.50"), resolved.getMatchedIpAddresses());
+
+                // 2件目・3件目: 未解決のIPアドレス（成功フラグ false）
+                WhoisCidrInfo failed1 = results.get(1);
+                assertFalse(failed1.isSuccess());
+                assertNull(failed1.getCidr());
+                assertEquals(List.of("198.51.100.10"), failed1.getMatchedIpAddresses());
+
+                WhoisCidrInfo failed2 = results.get(2);
+                assertFalse(failed2.isSuccess());
+                assertNull(failed2.getCidr());
+                assertEquals(List.of("203.0.113.5"), failed2.getMatchedIpAddresses());
+
+                // キャッシュには成功分のみ登録されていること
+                assertEquals(1, resolver.getCachedResults().size());
+
+                // 未解決IPアドレスがログ出力されていること
+                assertTrue(stdout.contains("[WHOIS] [ERROR] Failed to resolve IP 198.51.100.10"));
+                assertTrue(stdout.contains("[WHOIS] [WARN] Unresolved IP address(es) (2): 198.51.100.10, 203.0.113.5"));
+                assertTrue(stdout.contains(
+                                "[WHOIS] Completed resolution with errors: 2/4 IP address(es) resolved into 1 CIDR block(s), 2 IP address(es) unresolved."));
         }
 
         @Test
@@ -351,5 +456,195 @@ class IpToCidrResolverTest {
                 } finally {
                         Thread.interrupted(); // テストスレッドの割り込み状態をクリア
                 }
+        }
+
+        @Test
+        void testConsecutiveWhoisAddsIncrementalDelayAndResetsOnCacheHit() {
+                List<Duration> sleepDurations = new ArrayList<>();
+                WhoisExecutor mockExecutor = ip -> {
+                        if (ip.startsWith("10.0.1.")) {
+                                return "CIDR: 10.0.1.0/24\nOrgName: Net 1";
+                        } else if (ip.startsWith("10.0.2.")) {
+                                return "CIDR: 10.0.2.0/24\nOrgName: Net 2";
+                        } else if (ip.startsWith("10.0.3.")) {
+                                return "CIDR: 10.0.3.0/24\nOrgName: Net 3";
+                        } else if (ip.startsWith("10.0.4.")) {
+                                return "CIDR: 10.0.4.0/24\nOrgName: Net 4";
+                        }
+                        return "CIDR: 10.0.5.0/24\nOrgName: Net 5";
+                };
+
+                // ベース5秒、連続加算+1秒、上限7秒
+                IpToCidrResolver resolver = new IpToCidrResolver(
+                                mockExecutor,
+                                new WhoisParser(),
+                                Duration.ofSeconds(5),
+                                Duration.ofMillis(500),
+                                Duration.ofMinutes(1),
+                                2,
+                                Duration.ofSeconds(1),
+                                Duration.ofSeconds(7),
+                                Duration.ofSeconds(5),
+                                sleepDurations::add,
+                                Clock.systemUTC());
+
+                // 10.0.1.1 (0s) -> 10.0.2.1 (5+1=6s) -> 10.0.3.1 (5+2=7s) -> 10.0.4.1 (上限7s)
+                // -> 10.0.4.2 (キャッシュヒット0.5s・連続カウントリセット) -> 10.0.5.1 (ベース5s)
+                List<WhoisCidrInfo> results = resolver.resolve(
+                                "10.0.1.1",
+                                "10.0.2.1",
+                                "10.0.3.1",
+                                "10.0.4.1",
+                                "10.0.4.2",
+                                "10.0.5.1");
+
+                assertEquals(5, results.size());
+                assertEquals(
+                                List.of(
+                                                Duration.ofSeconds(6),
+                                                Duration.ofSeconds(7),
+                                                Duration.ofSeconds(7),
+                                                Duration.ofMillis(500),
+                                                Duration.ofSeconds(5)),
+                                sleepDurations);
+        }
+
+        @Test
+        void testAdaptiveIntervalAdjustmentFromElapsedTimeOnRateLimit() {
+                List<Duration> sleepDurations = new ArrayList<>();
+                AtomicReference<Instant> currentTime = new AtomicReference<>(Instant.parse("2026-01-01T00:00:00Z"));
+                Clock mutableClock = new Clock() {
+                        @Override
+                        public java.time.ZoneId getZone() {
+                                return ZoneOffset.UTC;
+                        }
+
+                        @Override
+                        public Clock withZone(java.time.ZoneId zone) {
+                                return this;
+                        }
+
+                        @Override
+                        public Instant instant() {
+                                return currentTime.get();
+                        }
+                };
+
+                IpToCidrResolver.Sleeper advancingSleeper = duration -> {
+                        sleepDurations.add(duration);
+                        currentTime.set(currentTime.get().plus(duration));
+                };
+
+                int[] fourthIpAttempts = { 0 };
+                WhoisExecutor mockExecutor = ip -> {
+                        if (ip.startsWith("10.1.0.")) {
+                                return "CIDR: 10.1.0.0/24\nOrgName: Net 1";
+                        } else if (ip.startsWith("10.2.0.")) {
+                                return "CIDR: 10.2.0.0/24\nOrgName: Net 2";
+                        } else if (ip.startsWith("10.3.0.")) {
+                                return "CIDR: 10.3.0.0/24\nOrgName: Net 3";
+                        } else if (ip.startsWith("10.4.0.")) {
+                                if (++fourthIpAttempts[0] == 1) {
+                                        return "% Query rate limit exceeded";
+                                }
+                                return "CIDR: 10.4.0.0/24\nOrgName: Net 4";
+                        }
+                        return "CIDR: 10.5.0.0/24\nOrgName: Net 5";
+                };
+
+                IpToCidrResolver resolver = new IpToCidrResolver(
+                                mockExecutor,
+                                new WhoisParser(),
+                                Duration.ofSeconds(5),
+                                Duration.ofMillis(500),
+                                Duration.ofMinutes(1),
+                                3,
+                                Duration.ofSeconds(1),
+                                Duration.ofSeconds(60),
+                                Duration.ofSeconds(5),
+                                advancingSleeper,
+                                mutableClock);
+
+                PrintStream originalOut = System.out;
+                ByteArrayOutputStream capturedOut = new ByteArrayOutputStream();
+                List<WhoisCidrInfo> results;
+                try {
+                        System.setOut(new PrintStream(capturedOut, true, StandardCharsets.UTF_8));
+                        // 1. 10.1.0.1 (t=0s, ok)
+                        // 2. 10.2.0.1 (wait 6s -> t=6s, ok)
+                        // 3. 10.3.0.1 (wait 7s -> t=13s, ok)
+                        // 4. 10.4.0.1 (wait 8s -> t=21s, rate limit! elapsed=21s, queries=4 -> avg=7s, 1.5x=10.5s, cache=0.75s)
+                        //    -> cooldown 60s -> retry ok
+                        // 5. 10.4.0.2 (キャッシュヒット -> 調整後の0.75s待機、連続カウントリセット)
+                        // 6. 10.5.0.1 (調整後のベース10.5s待機 -> ok)
+                        results = resolver.resolve(
+                                        "10.1.0.1",
+                                        "10.2.0.1",
+                                        "10.3.0.1",
+                                        "10.4.0.1",
+                                        "10.4.0.2",
+                                        "10.5.0.1");
+                } finally {
+                        System.setOut(originalOut);
+                }
+                String stdout = capturedOut.toString(StandardCharsets.UTF_8);
+
+                assertEquals(5, results.size());
+                assertEquals(Duration.ofMillis(10_500), resolver.getCurrentRateLimitInterval());
+                assertEquals(Duration.ofMillis(750), resolver.getCurrentCacheHitInterval());
+                assertEquals(
+                                List.of(
+                                                Duration.ofSeconds(6),
+                                                Duration.ofSeconds(7),
+                                                Duration.ofSeconds(8),
+                                                Duration.ofMinutes(8),
+                                                Duration.ofMillis(750),
+                                                Duration.ofMillis(10_500)),
+                                sleepDurations);
+                assertTrue(stdout.contains("Adjusted intervals after rate limit on 10.4.0.1 (elapsed: 21s, queries: 4)"));
+                assertTrue(stdout.contains("whois interval: 10.50 second(s), cache-hit interval: 0.75 second(s)"));
+
+                // clearCache() で待機時間も初期値（5秒 / 0.5秒）へリセットされること
+                resolver.clearCache();
+                assertEquals(Duration.ofSeconds(5), resolver.getCurrentRateLimitInterval());
+                assertEquals(Duration.ofMillis(500), resolver.getCurrentCacheHitInterval());
+        }
+
+        @Test
+        void testProgressiveCooldownBackoffOnRepeatedRateLimits() {
+                List<Duration> sleepDurations = new ArrayList<>();
+                int[] attempts = { 0 };
+
+                WhoisExecutor mockExecutor = ip -> {
+                        if (++attempts[0] <= 6) {
+                                return "% Query rate limit exceeded";
+                        }
+                        return "CIDR: 203.0.113.0/24\nOrgName: Recovered After Backoff";
+                };
+
+                IpToCidrResolver resolver = new IpToCidrResolver(
+                                mockExecutor,
+                                new WhoisParser(),
+                                Duration.ofSeconds(5),
+                                Duration.ofMillis(500),
+                                Duration.ofMinutes(1),
+                                10,
+                                sleepDurations::add);
+
+                List<WhoisCidrInfo> results = resolver.resolve("203.0.113.10");
+
+                assertEquals(1, results.size());
+                assertTrue(results.getFirst().isSuccess());
+                assertEquals("Recovered After Backoff", results.getFirst().getRegistrant());
+                // クールダウンが 初回8分 -> 2回目2分 -> 3回目4分 -> 4回目8分 -> 5回目10分(上限) -> 6回目10分(上限) と推移すること
+                assertEquals(
+                                List.of(
+                                                Duration.ofMinutes(8),
+                                                Duration.ofMinutes(2),
+                                                Duration.ofMinutes(4),
+                                                Duration.ofMinutes(8),
+                                                Duration.ofMinutes(10),
+                                                Duration.ofMinutes(10)),
+                                sleepDurations);
         }
 }

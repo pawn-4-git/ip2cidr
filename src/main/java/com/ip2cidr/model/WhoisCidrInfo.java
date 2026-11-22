@@ -13,6 +13,7 @@ import java.util.Set;
  */
 public class WhoisCidrInfo {
 
+    private final boolean success;
     private final Cidr cidr;
     private final List<Cidr> allCidrs;
     private final String ipRange;
@@ -79,9 +80,48 @@ public class WhoisCidrInfo {
             List<String> techContacts,
             List<String> abuseContacts,
             String rawWhoisOutput) {
-        this.cidr = Objects.requireNonNull(cidr, "cidr must not be null");
+        this(
+                true,
+                Objects.requireNonNull(cidr, "cidr must not be null"),
+                allCidrs,
+                ipRange,
+                inetnumCidr,
+                routeCidr,
+                inetnumIpRange,
+                routeIpRange,
+                matchedIpAddresses,
+                country,
+                registrant,
+                netName,
+                descriptions,
+                adminContacts,
+                techContacts,
+                abuseContacts,
+                rawWhoisOutput);
+    }
+
+    private WhoisCidrInfo(
+            boolean success,
+            Cidr cidr,
+            List<Cidr> allCidrs,
+            String ipRange,
+            Cidr inetnumCidr,
+            Cidr routeCidr,
+            String inetnumIpRange,
+            String routeIpRange,
+            List<String> matchedIpAddresses,
+            String country,
+            String registrant,
+            String netName,
+            List<String> descriptions,
+            List<String> adminContacts,
+            List<String> techContacts,
+            List<String> abuseContacts,
+            String rawWhoisOutput) {
+        this.success = success;
+        this.cidr = cidr;
         this.allCidrs = allCidrs == null || allCidrs.isEmpty()
-                ? List.of(cidr)
+                ? (cidr != null ? List.of(cidr) : List.of())
                 : Collections.unmodifiableList(new ArrayList<>(new LinkedHashSet<>(allCidrs)));
         this.ipRange = ipRange != null ? ipRange : "";
         this.inetnumCidr = inetnumCidr;
@@ -108,6 +148,43 @@ public class WhoisCidrInfo {
                 ? List.of()
                 : Collections.unmodifiableList(new ArrayList<>(new LinkedHashSet<>(abuseContacts)));
         this.rawWhoisOutput = rawWhoisOutput != null ? rawWhoisOutput : "";
+    }
+
+    /**
+     * レートリミットや実行エラー等によりwhois解決に失敗・未検索となったIPアドレス用の失敗エントリを生成します。
+     *
+     * @param ipAddress 未解決のIPアドレス
+     * @return 失敗フラグ（{@code success == false}）を持つ {@link WhoisCidrInfo}
+     */
+    public static WhoisCidrInfo failed(String ipAddress) {
+        if (ipAddress == null || ipAddress.isBlank()) {
+            throw new IllegalArgumentException("ipAddress must not be null or blank");
+        }
+        return new WhoisCidrInfo(
+                false,
+                null,
+                List.of(),
+                "",
+                null,
+                null,
+                "",
+                "",
+                List.of(ipAddress.trim()),
+                "",
+                "",
+                "",
+                List.of(),
+                List.of(),
+                List.of(),
+                List.of(),
+                "");
+    }
+
+    /**
+     * whois解決に成功したかどうかを返します（{@code true}: 成功、{@code false}: 失敗・未検索）。
+     */
+    public boolean isSuccess() {
+        return success;
     }
 
     /**
@@ -237,7 +314,8 @@ public class WhoisCidrInfo {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof WhoisCidrInfo that)) return false;
-        return Objects.equals(cidr, that.cidr)
+        return success == that.success
+                && Objects.equals(cidr, that.cidr)
                 && Objects.equals(allCidrs, that.allCidrs)
                 && Objects.equals(ipRange, that.ipRange)
                 && Objects.equals(inetnumCidr, that.inetnumCidr)
@@ -258,6 +336,7 @@ public class WhoisCidrInfo {
     @Override
     public int hashCode() {
         return Objects.hash(
+                success,
                 cidr,
                 allCidrs,
                 ipRange,
@@ -279,7 +358,8 @@ public class WhoisCidrInfo {
     @Override
     public String toString() {
         return "WhoisCidrInfo{" +
-                "cidr=" + cidr +
+                "success=" + success +
+                ", cidr=" + cidr +
                 ", allCidrs=" + allCidrs +
                 ", ipRange='" + ipRange + '\'' +
                 ", inetnumCidr=" + inetnumCidr +

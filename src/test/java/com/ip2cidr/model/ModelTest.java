@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -187,7 +188,25 @@ class ModelTest {
                 List.of("192.0.2.1", "192.0.2.2"), "JP", "Org", "NET", List.of("Desc"), List.of("Admin"), List.of("Tech"), List.of("abuse@example.com"), "diffRaw"));
 
         assertTrue(same.toString().contains("WhoisCidrInfo{"));
+        assertTrue(same.toString().contains("success=true"));
         assertTrue(same.toString().contains("192.0.2.0/24"));
+        assertTrue(same.isSuccess());
+
+        // failed() ファクトリメソッドの検証
+        WhoisCidrInfo failed1 = WhoisCidrInfo.failed(" 203.0.113.10 ");
+        WhoisCidrInfo failed2 = WhoisCidrInfo.failed("203.0.113.10");
+        assertFalse(failed1.isSuccess());
+        assertNull(failed1.getCidr());
+        assertTrue(failed1.getAllCidrs().isEmpty());
+        assertEquals("", failed1.getIpRange());
+        assertEquals(List.of("203.0.113.10"), failed1.getMatchedIpAddresses());
+        assertEquals(failed1, failed2);
+        assertEquals(failed1.hashCode(), failed2.hashCode());
+        assertNotEquals(same, failed1);
+        assertTrue(failed1.toString().contains("success=false"));
+
+        assertThrows(IllegalArgumentException.class, () -> WhoisCidrInfo.failed(null));
+        assertThrows(IllegalArgumentException.class, () -> WhoisCidrInfo.failed("   "));
     }
 }
 

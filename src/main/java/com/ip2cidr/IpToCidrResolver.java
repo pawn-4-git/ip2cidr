@@ -10,7 +10,9 @@ import com.ip2cidr.whois.WhoisExecutor;
 import com.ip2cidr.whois.WhoisParser;
 
 import java.net.InetAddress;
+import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -40,7 +42,12 @@ public class IpToCidrResolver {
     public static final Duration DEFAULT_CACHE_HIT_INTERVAL = Duration.ofMillis(500);
 
     /**
-     * whoisサーバーからレートリミット（アクセス制限）を受けた際のデフォルト待機時間（1分）。
+     * レートリミット発生時の初回クールダウン待機時間（8分）。
+     */
+    public static final Duration DEFAULT_INITIAL_RATE_LIMIT_COOLDOWN = Duration.ofMinutes(8);
+
+    /**
+     * whoisサーバーからレートリミット（アクセス制限）を受けた際の2回目以降の基準クールダウン時間（1分）。
      */
     public static final Duration DEFAULT_RATE_LIMIT_COOLDOWN = Duration.ofMinutes(1);
 
@@ -48,6 +55,26 @@ public class IpToCidrResolver {
      * レートリミット発生時のデフォルト最大リトライ回数（10回）。
      */
     public static final int DEFAULT_MAX_RATE_LIMIT_RETRIES = 10;
+
+    /**
+     * レートリミット発生時の段階的クールダウン待機時間のデフォルト上限（10分）。
+     */
+    public static final Duration DEFAULT_MAX_RATE_LIMIT_COOLDOWN = Duration.ofMinutes(10);
+
+    /**
+     * キャッシュヒットを挟まずに連続してwhois検索を実行する際のデフォルト加算時間（+1秒/回）。
+     */
+    public static final Duration DEFAULT_CONSECUTIVE_WHOIS_INCREMENT = Duration.ofSeconds(1);
+
+    /**
+     * 動的調整によるwhois検索間隔のデフォルト上限（60秒）。
+     */
+    public static final Duration DEFAULT_MAX_RATE_LIMIT_INTERVAL = Duration.ofSeconds(60);
+
+    /**
+     * 動的調整によるキャッシュヒット時待機時間のデフォルト上限（5秒）。
+     */
+    public static final Duration DEFAULT_MAX_CACHE_HIT_INTERVAL = Duration.ofSeconds(5);
 
     /**
      * レートリミット待機処理を抽象化する関数型インターフェース。
@@ -79,12 +106,23 @@ public class IpToCidrResolver {
     private final WhoisParser whoisParser;
     private final Duration rateLimitInterval;
     private final Duration cacheHitInterval;
+    private final Duration initialRateLimitCooldown;
     private final Duration rateLimitCooldown;
+    private final Duration maxRateLimitCooldown;
     private final int maxRateLimitRetries;
+    private final Duration consecutiveWhoisIncrement;
+    private final Duration maxRateLimitInterval;
+    private final Duration maxCacheHitInterval;
     private final Sleeper sleeper;
+    private final Clock clock;
 
     private final Map<Cidr, CachedEntry> cidrCache = new LinkedHashMap<>();
     private boolean hasExecutedWhois = false;
+    private Duration currentRateLimitInterval;
+    private Duration currentCacheHitInterval;
+    private int consecutiveWhoisCount = 0;
+    private Instant whoisWindowStart = null;
+    private int whoisQueriesInWindow = 0;
 
     /**
      * デフォルト設定（OSのwhoisコマンド使用、inetnum優先、通常検索間隔5秒、キャッシュヒット時0.5秒待機、レートリミット発生時1分待機）でリゾルバを生成します。
@@ -170,13 +208,51 @@ public class IpToCidrResolver {
             Duration rateLimitCooldown,
             int maxRateLimitRetries,
             Sleeper sleeper) {
+        this(
+                whoisExecutor,
+                whoisParser,
+                rateLimitInterval,
+                cacheHitInterval,
+                rateLimitCooldown,
+                maxRateLimitRetries,
+                DEFAULT_CONSECUTIVE_WHOIS_INCREMENT,
+                DEFAULT_MAX_RATE_LIMIT_INTERVAL,
+                DEFAULT_MAX_CACHE_HIT_INTERVAL,
+                sleeper,
+                Clock.systemUTC());
+    }
+
+    /**
+     * 動的待機時間調整パラメータおよび時刻取得用 {@link Clock} を含めてリゾルバを生成します（テストや高度なカスタマイズ用）。
+     */
+    public IpToCidrResolver(
+            WhoisExecutor whoisExecutor,
+            WhoisParser whoisParser,
+            Duration rateLimitInterval,
+            Duration cacheHitInterval,
+            Duration rateLimitCooldown,
+            int maxRateLimitRetries,
+            Duration consecutiveWhoisIncrement,
+            Duration maxRateLimitInterval,
+            Duration maxCacheHitInterval,
+            Sleeper sleeper,
+            Clock clock) {
         this.whoisExecutor = Objects.requireNonNull(whoisExecutor, "whoisExecutor must not be null");
         this.whoisParser = Objects.requireNonNull(whoisParser, "whoisParser must not be null");
         this.rateLimitInterval = Objects.requireNonNull(rateLimitInterval, "rateLimitInterval must not be null");
         this.cacheHitInterval = Objects.requireNonNull(cacheHitInterval, "cacheHitInterval must not be null");
+        this.initialRateLimitCooldown = DEFAULT_INITIAL_RATE_LIMIT_COOLDOWN;
         this.rateLimitCooldown = Objects.requireNonNull(rateLimitCooldown, "rateLimitCooldown must not be null");
+        this.maxRateLimitCooldown = DEFAULT_MAX_RATE_LIMIT_COOLDOWN;
         this.maxRateLimitRetries = maxRateLimitRetries;
+        this.consecutiveWhoisIncrement = Objects.requireNonNull(
+                consecutiveWhoisIncrement, "consecutiveWhoisIncrement must not be null");
+        this.maxRateLimitInterval = Objects.requireNonNull(
+                maxRateLimitInterval, "maxRateLimitInterval must not be null");
+        this.maxCacheHitInterval = Objects.requireNonNull(
+                maxCacheHitInterval, "maxCacheHitInterval must not be null");
         this.sleeper = Objects.requireNonNull(sleeper, "sleeper must not be null");
+        this.clock = Objects.requireNonNull(clock, "clock must not be null");
         if (rateLimitInterval.isNegative()) {
             throw new IllegalArgumentException("rateLimitInterval must not be negative");
         }
@@ -189,6 +265,17 @@ public class IpToCidrResolver {
         if (maxRateLimitRetries < 0) {
             throw new IllegalArgumentException("maxRateLimitRetries must not be negative");
         }
+        if (consecutiveWhoisIncrement.isNegative()) {
+            throw new IllegalArgumentException("consecutiveWhoisIncrement must not be negative");
+        }
+        if (maxRateLimitInterval.isNegative()) {
+            throw new IllegalArgumentException("maxRateLimitInterval must not be negative");
+        }
+        if (maxCacheHitInterval.isNegative()) {
+            throw new IllegalArgumentException("maxCacheHitInterval must not be negative");
+        }
+        this.currentRateLimitInterval = rateLimitInterval;
+        this.currentCacheHitInterval = cacheHitInterval;
     }
 
     /**
@@ -233,6 +320,7 @@ public class IpToCidrResolver {
         sortedInputs.sort(null);
 
         Map<Cidr, WhoisCidrInfo> batchResults = new LinkedHashMap<>();
+        List<String> unresolvedIps = new ArrayList<>();
         CachedEntry lastResolvedEntry = null;
         int total = sortedInputs.size();
 
@@ -261,13 +349,29 @@ public class IpToCidrResolver {
                         existingInfo.getCidr(),
                         existingInfo.getCountry(),
                         existingInfo.getRegistrant());
-                // 既に判定範囲内のIPアドレスだった場合も、次のwhoisの実行を空けるために0.5秒待機
-                sleepDuration(cacheHitInterval);
+                // 既に判定範囲内のIPアドレスだった場合も、次のwhoisの実行を空けるために待機し、連続whoisカウントをリセット
+                consecutiveWhoisCount = 0;
+                sleepDuration(currentCacheHitInterval);
                 continue;
             }
 
             // 2. 未検出のIPアドレスの場合はレートリミット（通常5秒間隔、制限検知時は1分待機リトライ）を適用してwhoisを実行
-            String rawWhois = executeWhoisWithRetry(ip, current, total);
+            String rawWhois;
+            try {
+                rawWhois = executeWhoisWithRetry(ip, current, total);
+            } catch (WhoisException e) {
+                if (Thread.currentThread().isInterrupted()) {
+                    throw e;
+                }
+                logStatus(
+                        "[WHOIS] [ERROR] Failed to resolve IP %s (%s). Aborting remaining WHOIS queries and returning partial results.",
+                        ip,
+                        e.getMessage());
+                for (int j = i; j < total; j++) {
+                    unresolvedIps.add(sortedInputs.get(j).rawIp());
+                }
+                break;
+            }
 
             WhoisParser.ParsedResult parsedResult = whoisParser.parseWithBlocks(ip, rawWhois);
             WhoisCidrInfo newInfo = parsedResult.info();
@@ -299,20 +403,57 @@ public class IpToCidrResolver {
             }
         }
 
-        logStatus(
-                "[WHOIS] Completed resolution: %d IP address(es) aggregated into %d CIDR block(s).",
-                total,
-                batchResults.size());
+        List<WhoisCidrInfo> finalResults = new ArrayList<>(batchResults.values());
+        if (!unresolvedIps.isEmpty()) {
+            for (String unresolvedIp : unresolvedIps) {
+                finalResults.add(WhoisCidrInfo.failed(unresolvedIp));
+            }
+            logStatus(
+                    "[WHOIS] [WARN] Unresolved IP address(es) (%d): %s",
+                    unresolvedIps.size(),
+                    String.join(", ", unresolvedIps));
+            int resolvedIpCount = total - unresolvedIps.size();
+            logStatus(
+                    "[WHOIS] Completed resolution with errors: %d/%d IP address(es) resolved into %d CIDR block(s), %d IP address(es) unresolved.",
+                    resolvedIpCount,
+                    total,
+                    batchResults.size(),
+                    unresolvedIps.size());
+        } else {
+            logStatus(
+                    "[WHOIS] Completed resolution: %d IP address(es) aggregated into %d CIDR block(s).",
+                    total,
+                    batchResults.size());
+        }
 
-        return new ArrayList<>(batchResults.values());
+        return finalResults;
     }
 
     /**
-     * リゾルバ内にキャッシュされている検出済みCIDR情報をクリアします。
+     * リゾルバ内にキャッシュされている検出済みCIDR情報および動的調整された待機時間状態をリセットします。
      */
     public synchronized void clearCache() {
         cidrCache.clear();
         hasExecutedWhois = false;
+        currentRateLimitInterval = rateLimitInterval;
+        currentCacheHitInterval = cacheHitInterval;
+        consecutiveWhoisCount = 0;
+        whoisWindowStart = null;
+        whoisQueriesInWindow = 0;
+    }
+
+    /**
+     * 現在の（動的調整後の）通常whois検索ベース間隔を返します。
+     */
+    public synchronized Duration getCurrentRateLimitInterval() {
+        return currentRateLimitInterval;
+    }
+
+    /**
+     * 現在の（動的調整後の）キャッシュヒット時待機時間を返します。
+     */
+    public synchronized Duration getCurrentCacheHitInterval() {
+        return currentCacheHitInterval;
     }
 
     /**
@@ -345,42 +486,137 @@ public class IpToCidrResolver {
         while (true) {
             attempt++;
             hasExecutedWhois = true;
+            if (whoisWindowStart == null) {
+                whoisWindowStart = clock.instant();
+            }
+            whoisQueriesInWindow++;
             logStatus("[WHOIS] [%d/%d] Querying whois for %s...", current, total, ip);
             try {
                 String rawWhois = whoisExecutor.executeWhois(ip);
                 if (!whoisParser.isRateLimited(rawWhois)) {
+                    consecutiveWhoisCount++;
                     return rawWhois;
                 }
+                adjustIntervalsOnRateLimit(ip);
                 if (attempt > maxRateLimitRetries) {
                     throw new WhoisException(
                             "Rate limit persisted after " + maxRateLimitRetries + " retries for IP: " + ip);
                 }
+                Duration cooldown = calculateCooldownForAttempt(attempt, true);
                 logStatus(
                         "[WHOIS] [WARN] Rate limit detected for IP %s. Waiting %d seconds before retry (%d/%d)...",
-                        ip, rateLimitCooldown.toSeconds(), attempt, maxRateLimitRetries);
+                        ip, cooldown.toSeconds(), attempt, maxRateLimitRetries);
+                sleepDuration(cooldown);
+                continue;
             } catch (WhoisException e) {
                 if (attempt > maxRateLimitRetries) {
                     throw e;
                 }
+                Duration cooldown = calculateCooldownForAttempt(attempt, false);
                 logStatus(
                         "[WHOIS] [WARN] Query failed (%s) for IP %s. Waiting %d seconds before retry (%d/%d)...",
-                        e.getMessage(), ip, rateLimitCooldown.toSeconds(), attempt, maxRateLimitRetries);
+                        e.getMessage(), ip, cooldown.toSeconds(), attempt, maxRateLimitRetries);
+                sleepDuration(cooldown);
             }
-            sleepDuration(rateLimitCooldown);
         }
     }
 
+    private Duration calculateCooldownForAttempt(int attempt, boolean isRateLimit) {
+        if (rateLimitCooldown.isZero()) {
+            return Duration.ZERO;
+        }
+        if (isRateLimit && attempt == 1) {
+            return initialRateLimitCooldown;
+        }
+        long baseMillis = rateLimitCooldown.toMillis();
+        long maxMillis = Math.max(baseMillis, maxRateLimitCooldown.toMillis());
+        int shift = Math.min(Math.max(attempt - 1, 0), 30);
+        long multiplier = 1L << shift;
+        if (baseMillis > maxMillis / multiplier) {
+            return Duration.ofMillis(maxMillis);
+        }
+        return Duration.ofMillis(Math.min(maxMillis, baseMillis * multiplier));
+    }
+
+    private void adjustIntervalsOnRateLimit(String ip) {
+        Instant now = clock.instant();
+        Duration elapsed = (whoisWindowStart != null)
+                ? Duration.between(whoisWindowStart, now)
+                : Duration.ZERO;
+        if (elapsed.isNegative()) {
+            elapsed = Duration.ZERO;
+        }
+
+        if (!currentRateLimitInterval.isZero()) {
+            long currentMillis = currentRateLimitInterval.toMillis();
+            long steppedMillis = Math.round(currentMillis * 1.5);
+            if (steppedMillis <= currentMillis) {
+                steppedMillis = currentMillis + 1_000L;
+            }
+
+            long elapsedBasedMillis = 0L;
+            if (whoisQueriesInWindow > 1 && !elapsed.isZero()) {
+                // レートリミット到達までの平均間隔を算出し、安全マージン（1.5倍）を次回待機間隔の目安とする
+                long avgIntervalMillis = elapsed.toMillis() / (whoisQueriesInWindow - 1);
+                elapsedBasedMillis = Math.round(avgIntervalMillis * 1.5);
+            }
+
+            long maxMillis = Math.max(currentMillis, maxRateLimitInterval.toMillis());
+            long newRateLimitMillis = Math.min(maxMillis, Math.max(steppedMillis, elapsedBasedMillis));
+            currentRateLimitInterval = Duration.ofMillis(newRateLimitMillis);
+        }
+
+        if (!currentCacheHitInterval.isZero()) {
+            long currentCacheMillis = currentCacheHitInterval.toMillis();
+            long maxCacheMillis = Math.max(currentCacheMillis, maxCacheHitInterval.toMillis());
+            long newCacheMillis = Math.min(
+                    maxCacheMillis,
+                    Math.max(currentCacheMillis + 250L, Math.round(currentCacheMillis * 1.5)));
+            currentCacheHitInterval = Duration.ofMillis(newCacheMillis);
+        }
+
+        logStatus(
+                "[WHOIS] [INFO] Adjusted intervals after rate limit on %s (elapsed: %ds, queries: %d) -> whois interval: %s, cache-hit interval: %s",
+                ip,
+                elapsed.toSeconds(),
+                whoisQueriesInWindow,
+                formatDurationSeconds(currentRateLimitInterval),
+                formatDurationSeconds(currentCacheHitInterval));
+
+        consecutiveWhoisCount = 0;
+        whoisWindowStart = null;
+        whoisQueriesInWindow = 0;
+    }
+
     private void waitForRateLimitIfNeeded(String ip, int current, int total) {
-        if (!hasExecutedWhois || rateLimitInterval.isZero()) {
+        if (!hasExecutedWhois || currentRateLimitInterval.isZero()) {
             return;
         }
+        Duration additionalDelay = (!consecutiveWhoisIncrement.isZero() && consecutiveWhoisCount > 0)
+                ? consecutiveWhoisIncrement.multipliedBy(consecutiveWhoisCount)
+                : Duration.ZERO;
+        Duration waitTime = currentRateLimitInterval.plus(additionalDelay);
+        Duration effectiveMax = currentRateLimitInterval.compareTo(maxRateLimitInterval) > 0
+                ? currentRateLimitInterval
+                : maxRateLimitInterval;
+        if (waitTime.compareTo(effectiveMax) > 0) {
+            waitTime = effectiveMax;
+        }
         logStatus(
-                "[WHOIS] [%d/%d] Waiting %d second(s) for rate limit before querying %s...",
+                "[WHOIS] [%d/%d] Waiting %s for rate limit before querying %s...",
                 current,
                 total,
-                rateLimitInterval.toSeconds(),
+                formatDurationSeconds(waitTime),
                 ip);
-        sleepDuration(rateLimitInterval);
+        sleepDuration(waitTime);
+    }
+
+    private static String formatDurationSeconds(Duration duration) {
+        long millis = duration.toMillis();
+        if (millis % 1_000L == 0L) {
+            return (millis / 1_000L) + " second(s)";
+        }
+        return String.format("%.2f second(s)", millis / 1_000.0d);
     }
 
     private void logStatus(String format, Object... args) {
